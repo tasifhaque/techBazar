@@ -1,0 +1,30 @@
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Dependencies
+node_modules/
+
+#AGENTS
+.opencode
+AGENTS.MD
+
+# Build outputs
+.next/
+dist/
+build/
+
+# Uploads
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
