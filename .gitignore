@@ -7,10 +7,6 @@
 # Dependencies
 node_modules/
 
-#AGENTS
-.opencode
-AGENTS.MD
-
 # Build outputs
 .next/
 dist/
