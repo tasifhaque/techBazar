@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 import { ShoppingCart, Zap, Package } from "lucide-react";
 import type { Product } from "@/lib/api";
 import { useCart } from "@/store/cart";
+import { useQuickBuy } from "@/store/quickBuy";
 import { useAuth } from "@/store/auth";
+import { useToast } from "@/store/toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import PriceDisplay from "@/components/PriceDisplay";
@@ -18,7 +20,9 @@ interface Props {
 export default function ProductCard({ product, index = 0 }: Props) {
   const { t } = useI18n();
   const addItem = useCart((s) => s.addItem);
+  const setQuickBuyItem = useQuickBuy((s) => s.setItem);
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { addToast } = useToast();
   const router = useRouter();
   const [added, setAdded] = useState(false);
   const [bought, setBought] = useState(false);
@@ -27,15 +31,19 @@ export default function ProductCard({ product, index = 0 }: Props) {
   const discountedPrice = product.price * (1 - (product.discountPercentage || 0) / 100);
   const image = product.images?.[0] || null;
 
-  const handleAuthGuard = (): boolean => {
+  const handleAuthGuard = (action: "cart" | "buy"): boolean => {
     if (authLoading) return true;
-    if (!isAuthenticated) { router.push("/login"); return true; }
+    if (!isAuthenticated) {
+      addToast(t(action === "buy" ? "auth.guard.purchase" : "auth.guard.add_to_cart"), "info");
+      setTimeout(() => router.push("/login"), 800);
+      return true;
+    }
     return false;
   };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (handleAuthGuard()) return;
+    if (handleAuthGuard("cart")) return;
     addItem({
       productId: product._id, title: product.title, price: product.price,
       discountPercentage: product.discountPercentage, image: image || "",
@@ -46,10 +54,10 @@ export default function ProductCard({ product, index = 0 }: Props) {
 
   const handleBuyNow = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (handleAuthGuard()) return;
-    addItem({
+    if (handleAuthGuard("buy")) return;
+    setQuickBuyItem({
       productId: product._id, title: product.title, price: product.price,
-      discountPercentage: product.discountPercentage, image: image || "",
+      discountPercentage: product.discountPercentage, image: image || "", quantity: 1,
     });
     setBought(true);
     setTimeout(() => { setBought(false); router.push("/checkout"); }, 300);
@@ -158,29 +166,29 @@ export default function ProductCard({ product, index = 0 }: Props) {
         <div className="flex gap-2">
           <button
             onClick={handleAddToCart}
-            disabled={!isAuthenticated || product.stock === 0}
+            disabled={product.stock === 0}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 ${
               !isAuthenticated
-                ? "border border-[var(--border)] text-[var(--text-tertiary)] cursor-not-allowed opacity-40"
+                ? "border border-[var(--border)] text-[var(--text-tertiary)] hover:border-[var(--accent)]/30 hover:text-[var(--accent)]/60"
                 : added
                   ? "bg-[var(--success)] text-white"
                   : "border border-[var(--accent)]/50 text-[var(--accent)] hover:bg-[var(--accent)] hover:text-[var(--bg-primary)]"
             }`}
           >
             <ShoppingCart size={11} />
-            {!isAuthenticated ? `[${t("auth.login.title")}]` : added ? t("product.added") : t("product.add_to_cart")}
+            {added ? t("product.added") : t("product.add_to_cart")}
           </button>
           <button
             onClick={handleBuyNow}
-            disabled={!isAuthenticated || product.stock === 0}
+            disabled={product.stock === 0}
             className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-[0.15em] transition-all duration-300 ${
               !isAuthenticated
-                ? "bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] cursor-not-allowed opacity-40"
+                ? "bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]/60"
                 : "bg-[var(--accent)] text-[var(--bg-primary)] hover:shadow-[0_0_24px_rgba(212,175,55,0.25)]"
             }`}
           >
             <Zap size={11} />
-            {!isAuthenticated ? `[${t("auth.login.title")}]` : bought ? "..." : t("product.buy_now")}
+            {bought ? "..." : t("product.buy_now")}
           </button>
         </div>
       </div>

@@ -66,6 +66,9 @@ export const useCart = create<CartState>()(
     }),
     {
       name: STORAGE_KEY,
+      partialize: (state) => ({
+        items: state.items,
+      }),
     }
   )
 );

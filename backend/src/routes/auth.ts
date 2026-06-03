@@ -488,11 +488,11 @@ router.get("/me", optionalAuth, async (c) => {
   try {
     const userData = c.get("user");
     if (!userData) {
-      return c.json({ user: null });
+      return c.json({ error: "Not authenticated" }, 401);
     }
     const user = await User.findById(userData.userId).select("-password");
     if (!user) {
-      return c.json({ user: null });
+      return c.json({ error: "User not found" }, 404);
     }
     return c.json({
       user: {

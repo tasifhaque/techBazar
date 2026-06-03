@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowLeft, CreditCard, ShieldCheck, Truck, Lock, CheckCircle, ShoppingCart, Loader2 } from "lucide-react";
 import { useCart } from "@/store/cart";
+import { useQuickBuy } from "@/store/quickBuy";
 import { useAuth } from "@/store/auth";
 import { api } from "@/lib/api";
 import Link from "next/link";
@@ -27,7 +28,31 @@ export default function CheckoutPage() {
   const items = useCart((s) => s.items);
   const total = useCart((s) => s.total);
   const clearCart = useCart((s) => s.clearCart);
+  const quickBuyItem = useQuickBuy((s) => s.item);
+  const clearQuickBuy = useQuickBuy((s) => s.clearItem);
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  const [hydrated, setHydrated] = useState(useCart.persist.hasHydrated());
+
+  // Decide which items to display for checkout
+  const isQuickBuy = !!(quickBuyItem && !authLoading && hydrated);
+  const checkoutItems = isQuickBuy ? [quickBuyItem] : items;
+
+  // Local total function for checkout items (quickBuy or cart)
+  const calcTotal = (checkoutItems: typeof items) =>
+    checkoutItems.reduce((sum, i) => {
+      const discounted = i.price * (1 - i.discountPercentage / 100);
+      return sum + discounted * i.quantity;
+    }, 0);
+
+  const checkoutTotal = calcTotal(checkoutItems);
+
+  useEffect(() => {
+    if (!hydrated) {
+      const unsub = useCart.persist.onFinishHydration(() => setHydrated(true));
+      return unsub;
+    }
+  }, [hydrated]);
+
   const [step, setStep] = useState<"shipping" | "payment" | "confirm">("shipping");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,21 +65,21 @@ export default function CheckoutPage() {
   const [cardInfo, setCardInfo] = useState({ number: "", expiry: "", cvc: "", name: "" });
 
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading || !hydrated) return;
     if (!isAuthenticated) router.push("/login");
-    else if (items.length === 0) router.push("/cart");
-  }, [authLoading, isAuthenticated, items.length, router]);
+    else if (checkoutItems.length === 0) router.push("/cart");
+  }, [authLoading, hydrated, isAuthenticated, checkoutItems.length, router]);
 
   useEffect(() => {
     if (user?.name) setShipping((prev) => ({ ...prev, fullName: user.name }));
   }, [user]);
 
-  if (authLoading || !isAuthenticated) return (
+  if (authLoading || !isAuthenticated || !hydrated) return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
       <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
     </div>
   );
-  if (items.length === 0) return (
+  if (checkoutItems.length === 0) return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
       <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
     </div>
@@ -70,10 +95,14 @@ export default function CheckoutPage() {
     setLoading(true); setError("");
     try {
       const { order } = await api.orders.create({
-        items: items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+        items: checkoutItems.map((item) => ({ productId: item.productId, quantity: item.quantity })),
         shippingAddress: shipping, paymentMethod,
       });
-      clearCart();
+      if (isQuickBuy) {
+        clearQuickBuy();
+      } else {
+        clearCart();
+      }
       router.push(`/checkout/success?id=${order._id}`);
     } catch (err) { setError(err instanceof Error ? err.message : "Failed to place order"); }
     finally { setLoading(false); }
@@ -82,8 +111,8 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <Link href="/cart" className="inline-flex items-center gap-1.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] mb-6 transition-colors">
-          <ArrowLeft size={15} /> {t("cart.continue_shopping")}
+        <Link href={isQuickBuy ? "/products" : "/cart"} className="inline-flex items-center gap-1.5 text-sm text-[var(--text-tertiary)] hover:text-[var(--text-primary)] mb-6 transition-colors">
+          <ArrowLeft size={15} /> {isQuickBuy ? t("cart.continue_shopping") : t("cart.continue_shopping")}
         </Link>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
@@ -284,7 +313,7 @@ export default function CheckoutPage() {
               <div className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] p-6 sticky top-24">
                 <h3 className="font-semibold text-[var(--text-primary)] mb-4">{t("checkout.order_summary")}</h3>
                 <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                  {items.map((item) => {
+                  {checkoutItems.map((item) => {
                     const discounted = item.price * (1 - item.discountPercentage / 100);
                     return (
                       <div key={item.productId} className="flex items-center gap-3">
@@ -306,16 +335,16 @@ export default function CheckoutPage() {
                 </div>
                 <div className="border-t border-[var(--border)] pt-4 space-y-2">
                   <div className="flex justify-between text-sm text-[var(--text-secondary)]">
-                    <span>Subtotal</span><span><PriceDisplay amount={total()} /></span>
+                    <span>Subtotal</span><span><PriceDisplay amount={checkoutTotal} /></span>
                   </div>
                   <div className="flex justify-between text-sm text-[var(--text-secondary)]">
                     <span>Shipping</span><span className="text-[var(--success)] font-medium">Free</span>
                   </div>
                   <div className="flex justify-between text-sm text-[var(--text-secondary)]">
-                    <span>Tax</span><span><PriceDisplay amount={total() * 0.08} /></span>
+                    <span>Tax</span><span><PriceDisplay amount={checkoutTotal * 0.08} /></span>
                   </div>
                   <div className="flex justify-between text-lg font-bold text-[var(--text-primary)] border-t border-[var(--border)] pt-2 mt-2">
-                    <span>Total</span><span><PriceDisplay amount={total() * 1.08} /></span>
+                    <span>Total</span><span><PriceDisplay amount={checkoutTotal * 1.08} /></span>
                   </div>
                 </div>
                 {step === "confirm" && (
@@ -326,7 +355,7 @@ export default function CheckoutPage() {
                       {loading ? (
                         <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       ) : (
-                        <><CheckCircle size={18} /> Place Order — <PriceDisplay amount={total() * 1.08} /></>
+                        <><CheckCircle size={18} /> Place Order — <PriceDisplay amount={checkoutTotal * 1.08} /></>
                       )}
                     </button>
                   </div>

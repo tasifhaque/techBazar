@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ChevronDown, Package } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { ProductsGridSkeleton } from "@/components/SkeletonLoader";
@@ -33,6 +33,8 @@ function ProductsContent() {
   const [activeCategory, setActiveCategory] = useState(sp.get("category") || "");
   const [activeBrand, setActiveBrand] = useState(sp.get("brand") || "");
   const [searchQuery, setSearchQuery] = useState(sp.get("search") || "");
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
 
   useEffect(() => {
@@ -121,30 +123,179 @@ function ProductsContent() {
             </p>
 
             {/* Search bar — luxury edition */}
-            <div className="relative max-w-lg">
-              <div className="absolute -inset-1 bg-gradient-to-r from-[var(--accent)]/10 via-[var(--accent)]/5 to-transparent rounded-full blur-md opacity-0 focus-within:opacity-100 transition-opacity duration-500" />
-              <div className="relative flex items-center bg-[var(--bg-card)]/5 border border-[var(--border)]/40 rounded-full overflow-hidden backdrop-blur-2xl focus-within:border-[var(--accent)]/40 focus-within:shadow-[0_0_40px_rgba(212,175,55,0.08)] focus-within:bg-[var(--bg-card)]/10 transition-all duration-500">
-                <div className="ml-5 text-[var(--text-tertiary)] flex-shrink-0 transition-colors duration-300 peer-focus-within:text-[var(--accent)]">
-                  <Search size={13} />
-                </div>
+            <div className="relative max-w-2xl">
+              {/* Decorative gold rule beneath */}
+              <div className="absolute -bottom-5 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)]/30 to-transparent" />
+
+              {/* Outer glow ring — expands on focus */}
+              <motion.div
+                className="absolute -inset-2 bg-gradient-to-r from-[var(--accent)]/20 via-[var(--accent)]/8 to-[var(--accent)]/5 rounded-full blur-xl pointer-events-none"
+                animate={{ opacity: isFocused ? 1 : 0, scale: isFocused ? 1 : 0.92 }}
+                transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
+              />
+
+              {/* Secondary ambient glow */}
+              <motion.div
+                className="absolute -inset-5 bg-gradient-to-r from-[var(--accent)]/6 via-transparent to-[var(--accent)]/4 rounded-full blur-3xl pointer-events-none"
+                animate={{ opacity: isFocused ? 1 : 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+              />
+
+              {/* Main glassmorphic container */}
+              <motion.div
+                className="relative flex items-center bg-[var(--bg-card)]/8 backdrop-blur-2xl rounded-full overflow-hidden transition-shadow duration-700"
+                animate={{
+                  borderColor: isFocused
+                    ? 'rgba(212,175,55,0.35)'
+                    : 'rgba(255,255,255,0.05)',
+                  boxShadow: isFocused
+                    ? '0 0 60px rgba(212,175,55,0.08), inset 0 1px 0 rgba(212,175,55,0.08)'
+                    : '0 8px 32px rgba(0,0,0,0.12)',
+                }}
+                style={{ borderWidth: 1, borderStyle: 'solid' }}
+              >
+                {/* Inner gradient border overlay — slides in on focus */}
+                <motion.div
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  animate={{ opacity: isFocused ? 1 : 0 }}
+                  transition={{ duration: 0.5 }}
+                  style={{
+                    background:
+                      'linear-gradient(135deg, rgba(212,175,55,0.25) 0%, rgba(212,175,55,0.05) 40%, transparent 60%)',
+                    padding: 1,
+                    WebkitMask:
+                      'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                    WebkitMaskComposite: 'xor',
+                    maskComposite: 'exclude',
+                  }}
+                />
+
+                {/* Corner decorative ornaments */}
+                <div
+                  className="absolute top-0 left-0 w-4 h-4 border-t border-l border-[var(--accent)]/20 rounded-tl-full pointer-events-none transition-opacity duration-500"
+                  style={{ opacity: isFocused ? 0.7 : 0.15 }}
+                />
+                <div
+                  className="absolute top-0 right-0 w-4 h-4 border-t border-r border-[var(--accent)]/20 rounded-tr-full pointer-events-none transition-opacity duration-500"
+                  style={{ opacity: isFocused ? 0.7 : 0.15 }}
+                />
+                <div
+                  className="absolute bottom-0 left-0 w-4 h-4 border-b border-l border-[var(--accent)]/20 rounded-bl-full pointer-events-none transition-opacity duration-500"
+                  style={{ opacity: isFocused ? 0.7 : 0.15 }}
+                />
+                <div
+                  className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-[var(--accent)]/20 rounded-br-full pointer-events-none transition-opacity duration-500"
+                  style={{ opacity: isFocused ? 0.7 : 0.15 }}
+                />
+
+                {/* Animated search icon */}
+                <motion.div
+                  className="ml-6 flex-shrink-0 relative z-10"
+                  animate={{
+                    scale: isFocused ? 1.15 : 1,
+                    color: isFocused
+                      ? 'var(--accent)'
+                      : 'var(--text-tertiary)',
+                  }}
+                  transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                >
+                  <motion.div
+                    animate={
+                      isFocused
+                        ? {
+                            rotate: [0, -12, 12, -6, 6, 0],
+                            transition: { duration: 0.6, ease: 'easeInOut' },
+                          }
+                        : { rotate: 0 }
+                    }
+                  >
+                    <Search size={16} />
+                  </motion.div>
+                  {/* Soft pulse ring behind icon */}
+                  <motion.div
+                    className="absolute -inset-3 rounded-full"
+                    animate={{
+                      scale: isFocused ? 1 : 0.7,
+                      opacity: isFocused ? 1 : 0,
+                      backgroundColor: isFocused
+                        ? 'rgba(212,175,55,0.12)'
+                        : 'rgba(212,175,55,0)',
+                    }}
+                    transition={{ duration: 0.4 }}
+                  />
+                </motion.div>
+
+                {/* Refined input */}
                 <input
+                  ref={inputRef}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                   placeholder={t("products.search_placeholder")}
-                  className="flex-1 bg-transparent px-4 py-3.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]/50 focus:outline-none tracking-wide"
+                  className="flex-1 bg-transparent px-5 py-[18px] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]/40 focus:outline-none tracking-[0.02em] font-light relative z-10"
                 />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="mr-2 p-1.5 text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors"
+
+                {/* Clear button — animated pill that slides in */}
+                <AnimatePresence mode="wait">
+                  {searchQuery && (
+                    <motion.button
+                      key="clear-btn"
+                      initial={{ opacity: 0, scale: 0.7, x: 10 }}
+                      animate={{ opacity: 1, scale: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.7, x: 10 }}
+                      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                      onClick={() => setSearchQuery("")}
+                      className="mr-3 p-1.5 rounded-full bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] transition-colors duration-300 relative z-10 group"
+                    >
+                      <motion.div
+                        whileHover={{ rotate: 90 }}
+                        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+                      >
+                        <X size={11} />
+                      </motion.div>
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+
+                {/* Shimmer gold line beneath input */}
+                <AnimatePresence>
+                  {searchQuery && (
+                    <motion.div
+                      key="shimmer-line"
+                      initial={{ scaleX: 0, opacity: 0 }}
+                      animate={{ scaleX: 1, opacity: 1 }}
+                      exit={{ scaleX: 0, opacity: 0 }}
+                      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                      className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)]/60 to-transparent origin-center"
+                    />
+                  )}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* Subtle placeholder shimmer — sweeping light across empty input */}
+              <AnimatePresence>
+                {!searchQuery && !isFocused && (
+                  <motion.div
+                    key="shimmer-sweep"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 rounded-full pointer-events-none overflow-hidden"
                   >
-                    <X size={13} />
-                  </button>
+                    <motion.div
+                      className="absolute inset-y-0 w-1/2 bg-gradient-to-r from-transparent via-white/[0.025] to-transparent"
+                      animate={{ x: ['-100%', '300%'] }}
+                      transition={{
+                        duration: 5,
+                        repeat: Infinity,
+                        ease: 'linear',
+                        repeatDelay: 4,
+                      }}
+                    />
+                  </motion.div>
                 )}
-                {searchQuery && (
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)]/40 to-transparent" />
-                )}
-              </div>
+              </AnimatePresence>
             </div>
           </motion.div>
         </div>

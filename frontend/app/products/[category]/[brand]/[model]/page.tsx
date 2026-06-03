@@ -11,6 +11,8 @@ import {
 import { ProductDetailSkeleton } from "@/components/SkeletonLoader";
 import { api, type Product } from "@/lib/api";
 import { useCart } from "@/store/cart";
+import { useQuickBuy } from "@/store/quickBuy";
+import { useToast } from "@/store/toast";
 import PriceDisplay from "@/components/PriceDisplay";
 import { useAuth } from "@/store/auth";
 import Link from "next/link";
@@ -125,6 +127,8 @@ export default function ProductDetailPage() {
   const [imageIndex, setImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
   const addItem = useCart((s) => s.addItem);
+  const setQuickBuyItem = useQuickBuy((s) => s.setItem);
+  const { addToast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
@@ -140,7 +144,11 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = () => {
     if (isLoading) return;
-    if (!isAuthenticated) { router.push("/login"); return; }
+    if (!isAuthenticated) {
+      addToast(t("auth.guard.add_to_cart"), "info");
+      setTimeout(() => router.push("/login"), 800);
+      return;
+    }
     const img = product?.images?.[0] || "";
     addItem({
       productId: product!._id, title: product!.title, price: product!.price,
@@ -152,11 +160,15 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     if (isLoading) return;
-    if (!isAuthenticated) { router.push("/login"); return; }
+    if (!isAuthenticated) {
+      addToast(t("auth.guard.purchase"), "info");
+      setTimeout(() => router.push("/login"), 800);
+      return;
+    }
     const img = product?.images?.[0] || "";
-    addItem({
+    setQuickBuyItem({
       productId: product!._id, title: product!.title, price: product!.price,
-      discountPercentage: product!.discountPercentage, image: img,
+      discountPercentage: product!.discountPercentage, image: img, quantity: 1,
     });
     router.push("/checkout");
   };
@@ -302,30 +314,30 @@ export default function ProductDetailPage() {
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAddToCart}
-                disabled={!isAuthenticated || product.stock === 0}
+                disabled={product.stock === 0}
                 className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-medium tracking-wide transition-all duration-300 ${
                   !isAuthenticated
-                    ? "border border-[var(--border)] text-[var(--text-tertiary)] cursor-not-allowed opacity-40"
+                    ? "border border-[var(--border)] text-[var(--text-tertiary)] hover:border-[var(--accent)]/30 hover:text-[var(--accent)]/60"
                     : added
                       ? "bg-[var(--success)] text-white"
                       : "border border-[var(--accent)] text-[var(--accent)] hover:bg-[var(--accent)] hover:text-white"
                 }`}
               >
                 <ShoppingCart size={16} />
-                {!isAuthenticated ? `[${t("auth.login.title")}]` : added ? t("product.added_to_cart") : t("product.add_to_cart")}
+                {added ? t("product.added_to_cart") : t("product.add_to_cart")}
               </motion.button>
               <motion.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleBuyNow}
-                disabled={!isAuthenticated || product.stock === 0}
+                disabled={product.stock === 0}
                 className={`flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-medium tracking-wide transition-all duration-300 ${
                   !isAuthenticated
-                    ? "bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] cursor-not-allowed opacity-40"
+                    ? "bg-[var(--bg-tertiary)] text-[var(--text-tertiary)] hover:bg-[var(--accent)]/10 hover:text-[var(--accent)]/60"
                     : "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
                 }`}
               >
                 <Zap size={16} />
-                {!isAuthenticated ? `[${t("auth.login.title")}]` : t("product.buy_now")}
+                {t("product.buy_now")}
               </motion.button>
             </div>
 

@@ -29,7 +29,7 @@ export default function CartPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  if (authLoading || !isAuthenticated) return (
+  if (authLoading) return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
       <Loader2 size={28} className="animate-spin text-[var(--accent)]" />
     </div>

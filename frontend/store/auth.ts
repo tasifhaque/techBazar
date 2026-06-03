@@ -19,7 +19,11 @@ export const useAuth = create<AuthState>((set) => ({
   checkAuth: async () => {
     try {
       const { user } = await api.auth.me();
-      set({ user, isAuthenticated: true, isLoading: false });
+      if (user) {
+        set({ user, isAuthenticated: true, isLoading: false });
+      } else {
+        set({ user: null, isAuthenticated: false, isLoading: false });
+      }
     } catch {
       set({ user: null, isAuthenticated: false, isLoading: false });
     }

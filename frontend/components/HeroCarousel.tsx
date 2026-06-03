@@ -5,7 +5,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ShoppingCart, Zap } from "lucide-react";
 import type { Product } from "@/lib/api";
 import { useCart } from "@/store/cart";
+import { useQuickBuy } from "@/store/quickBuy";
 import { useAuth } from "@/store/auth";
+import { useToast } from "@/store/toast";
 import { useRouter } from "next/navigation";
 import PriceDisplay from "@/components/PriceDisplay";
 import { useI18n } from "@/lib/i18n-context";
@@ -18,7 +20,9 @@ export default function HeroCarousel({ products }: Props) {
   const { t } = useI18n();
   const [current, setCurrent] = useState(0);
   const addItem = useCart((s) => s.addItem);
+  const setQuickBuyItem = useQuickBuy((s) => s.setItem);
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { addToast } = useToast();
   const router = useRouter();
 
   const next = useCallback(() => {
@@ -37,7 +41,11 @@ export default function HeroCarousel({ products }: Props) {
 
   const handleAddToCart = (product: Product) => {
     if (authLoading) return;
-    if (!isAuthenticated) { router.push("/login"); return; }
+    if (!isAuthenticated) {
+      addToast(t("auth.guard.add_to_cart"), "info");
+      setTimeout(() => router.push("/login"), 800);
+      return;
+    }
     addItem({
       productId: product._id, title: product.title, price: product.price,
       discountPercentage: product.discountPercentage, image: product.images?.[0] || "",
@@ -46,10 +54,14 @@ export default function HeroCarousel({ products }: Props) {
 
   const handleBuyNow = (product: Product) => {
     if (authLoading) return;
-    if (!isAuthenticated) { router.push("/login"); return; }
-    addItem({
+    if (!isAuthenticated) {
+      addToast(t("auth.guard.purchase"), "info");
+      setTimeout(() => router.push("/login"), 800);
+      return;
+    }
+    setQuickBuyItem({
       productId: product._id, title: product.title, price: product.price,
-      discountPercentage: product.discountPercentage, image: product.images?.[0] || "",
+      discountPercentage: product.discountPercentage, image: product.images?.[0] || "", quantity: 1,
     });
     router.push("/checkout");
   };
@@ -151,27 +163,27 @@ export default function HeroCarousel({ products }: Props) {
                   <div className="flex gap-2.5">
                     <button
                       onClick={() => handleAddToCart(product)}
-                      disabled={!isAuthenticated}
+                      disabled={product.stock === 0}
                       className={`flex items-center gap-2 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition-all duration-400 ${
                         !isAuthenticated
-                          ? "border border-white/10 text-white/30 cursor-not-allowed"
+                          ? "border border-white/10 text-white/30 hover:border-white/30 hover:text-white/50"
                           : "group border border-white/15 text-white/70 hover:bg-white hover:text-[#0a0a0a]"
                       }`}
                     >
                       <ShoppingCart size={12} />
-                      {!isAuthenticated ? `[${t("auth.login.title")}]` : t("hero.add_to_cart")}
+                      {t("hero.add_to_cart")}
                     </button>
                     <button
                       onClick={() => handleBuyNow(product)}
-                      disabled={!isAuthenticated}
+                      disabled={product.stock === 0}
                       className={`flex items-center gap-2 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition-all duration-400 ${
                         !isAuthenticated
-                          ? "bg-gradient-to-r from-[var(--accent)]/20 to-[var(--accent-hover)]/20 text-white/30 cursor-not-allowed"
+                          ? "bg-gradient-to-r from-[var(--accent)]/20 to-[var(--accent-hover)]/20 text-white/30 hover:from-[var(--accent)]/30 hover:to-[var(--accent-hover)]/30 hover:text-white/50"
                           : "group bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] text-[#0a0a0a] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)]"
                       }`}
                     >
                       <Zap size={12} />
-                      {!isAuthenticated ? `[${t("auth.login.title")}]` : t("hero.buy_now")}
+                      {t("hero.buy_now")}
                     </button>
                   </div>
                 </div>
