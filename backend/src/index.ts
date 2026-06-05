@@ -15,6 +15,7 @@ import adminRoutes from "./routes/admin";
 import orderRoutes from "./routes/orders";
 import translationRoutes from "./routes/translations";
 import settingsRoutes from "./routes/settings";
+import helpRoutes from "./routes/help";
 
 const app = new Hono();
 
@@ -43,6 +44,7 @@ app.route("/api/admin", adminRoutes);
 app.route("/api/orders", orderRoutes);
 app.route("/api/translations", translationRoutes);
 app.route("/api/settings", settingsRoutes);
+app.route("/api/help", helpRoutes);
 
 const PORT = parseInt(process.env.PORT || "4000");
 

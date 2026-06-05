@@ -16,6 +16,9 @@ import {
   Crown,
   KeyRound,
   AtSign,
+  HelpCircle,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "@/store/auth";
 import { useSite } from "@/store/site";
@@ -51,6 +54,16 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
 
+  // Help settings
+  const [helpEmail, setHelpEmail] = useState("");
+  const [helpPhone, setHelpPhone] = useState("");
+  const [helpLocation, setHelpLocation] = useState("");
+  const [helpHours, setHelpHours] = useState("");
+  const [helpFaq, setHelpFaq] = useState<{ question: string; answer: string }[]>([]);
+  const [helpSaving, setHelpSaving] = useState(false);
+  const [helpError, setHelpError] = useState("");
+  const [helpSuccess, setHelpSuccess] = useState("");
+
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || user?.role !== "admin")) router.push("/");
   }, [authLoading, isAuthenticated, user, router]);
@@ -65,6 +78,16 @@ export default function SettingsPage() {
   useEffect(() => {
     setSiteNameInput(siteName);
   }, [siteName]);
+
+  useEffect(() => {
+    api.settings.get().then((data) => {
+      if (data.helpEmail !== undefined) setHelpEmail(data.helpEmail);
+      if (data.helpPhone !== undefined) setHelpPhone(data.helpPhone);
+      if (data.helpLocation !== undefined) setHelpLocation(data.helpLocation);
+      if (data.helpHours !== undefined) setHelpHours(data.helpHours);
+      if (data.helpFaq !== undefined) setHelpFaq(data.helpFaq);
+    }).catch(() => {});
+  }, []);
 
   if (authLoading) {
     return (
@@ -112,6 +135,43 @@ export default function SettingsPage() {
     } finally {
       setProfileSaving(false);
     }
+  };
+
+  // ─── Help Settings ────────────────────────────────────────
+  const handleHelpUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setHelpError("");
+    setHelpSuccess("");
+    setHelpSaving(true);
+    try {
+      await api.settings.update({
+        helpEmail,
+        helpPhone,
+        helpLocation,
+        helpHours,
+        helpFaq,
+      });
+      setHelpSuccess("Help page settings saved successfully!");
+      addToast("Help page settings saved successfully!", "success");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Update failed";
+      setHelpError(msg);
+      addToast(msg, "error");
+    } finally {
+      setHelpSaving(false);
+    }
+  };
+
+  const addFaqItem = () => {
+    setHelpFaq([...helpFaq, { question: "", answer: "" }]);
+  };
+
+  const removeFaqItem = (index: number) => {
+    setHelpFaq(helpFaq.filter((_, i) => i !== index));
+  };
+
+  const updateFaqItem = (index: number, field: "question" | "answer", value: string) => {
+    setHelpFaq(helpFaq.map((item, i) => (i === index ? { ...item, [field]: value } : item)));
   };
 
   // ─── Password Change ──────────────────────────────────────
@@ -473,6 +533,185 @@ export default function SettingsPage() {
                   <><Loader2 size={16} className="animate-spin" /> Changing...</>
                 ) : (
                   <><Lock size={16} /> Change Password</>
+                )}
+              </button>
+            </form>
+          </motion.div>
+
+          {/* ── Help Page Settings Section ──────────────────── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden shadow-lg"
+          >
+            <div className="relative px-6 md:px-8 py-5 border-b border-[var(--border)] bg-[var(--bg-tertiary)]/30">
+              <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[var(--accent)] to-[var(--accent-hover)]" />
+              <div className="flex items-center gap-3 ml-2">
+                <div className="p-2.5 rounded-xl bg-[var(--accent-light)]">
+                  <HelpCircle size={18} className="text-[var(--accent)]" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold font-serif text-[var(--text-primary)]">Help Page Settings</h2>
+                  <p className="text-xs text-[var(--text-secondary)]">Manage contact info and FAQ displayed on the Help page</p>
+                </div>
+              </div>
+            </div>
+            <form onSubmit={handleHelpUpdate} className="p-6 md:p-8 space-y-5">
+              <AnimatePresence>
+                {helpSuccess && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-3 bg-[var(--accent-light)] text-[var(--accent)] text-sm rounded-xl flex items-center gap-2 border border-[var(--accent)]/20"
+                  >
+                    <Check size={14} className="shrink-0" />
+                    {helpSuccess}
+                  </motion.div>
+                )}
+                {helpError && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-xl flex items-center gap-2"
+                  >
+                    <AlertTriangle size={14} className="shrink-0" />
+                    {helpError}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Contact info fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Email</label>
+                  <input
+                    type="text"
+                    value={helpEmail}
+                    onChange={(e) => setHelpEmail(e.target.value)}
+                    placeholder="hello@luxe.com"
+                    className="w-full px-4 py-3 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-all duration-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Phone</label>
+                  <input
+                    type="text"
+                    value={helpPhone}
+                    onChange={(e) => setHelpPhone(e.target.value)}
+                    placeholder="+1 (555) 123-4567"
+                    className="w-full px-4 py-3 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-all duration-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Location</label>
+                  <input
+                    type="text"
+                    value={helpLocation}
+                    onChange={(e) => setHelpLocation(e.target.value)}
+                    placeholder="New York, NY"
+                    className="w-full px-4 py-3 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-all duration-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--text-secondary)] mb-1.5">Hours</label>
+                  <input
+                    type="text"
+                    value={helpHours}
+                    onChange={(e) => setHelpHours(e.target.value)}
+                    placeholder="Mon – Fri, 9AM – 6PM EST"
+                    className="w-full px-4 py-3 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-all duration-300"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-[var(--border)]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]/50" />
+                <div className="flex-1 h-px bg-[var(--border)]" />
+              </div>
+
+              {/* FAQ Items */}
+              <div>
+                <label className="block text-sm font-medium text-[var(--text-secondary)] mb-3">FAQ Items</label>
+                <div className="space-y-3">
+                  {helpFaq.map((item, index) => (
+                    <div
+                      key={index}
+                      className="p-4 border border-[var(--border)] rounded-xl bg-[var(--bg-tertiary)]/20 space-y-3 relative"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs font-medium text-[var(--accent)]">FAQ #{index + 1}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeFaqItem(index)}
+                          className="text-[var(--text-tertiary)] hover:text-red-500 transition-colors p-1"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[var(--text-tertiary)] mb-1">Question</label>
+                        <input
+                          type="text"
+                          value={item.question}
+                          onChange={(e) => updateFaqItem(index, "question", e.target.value)}
+                          placeholder="Enter question"
+                          className="w-full px-3 py-2 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-all duration-300 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-[var(--text-tertiary)] mb-1">Answer</label>
+                        <textarea
+                          value={item.answer}
+                          onChange={(e) => updateFaqItem(index, "answer", e.target.value)}
+                          placeholder="Enter answer"
+                          rows={3}
+                          className="w-full px-3 py-2 border border-[var(--border)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-all duration-300 text-sm resize-none"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={addFaqItem}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 border border-dashed border-[var(--border)] rounded-xl text-sm text-[var(--text-secondary)] hover:border-[var(--accent)]/50 hover:text-[var(--accent)] transition-all duration-300"
+                  >
+                    <Plus size={14} />
+                    Add FAQ Item
+                  </button>
+                  {helpFaq.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setHelpFaq([])}
+                      className="flex items-center gap-2 px-4 py-2 border border-dashed border-red-400/50 rounded-xl text-sm text-red-500 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-300"
+                    >
+                      <Trash2 size={14} />
+                      Remove All
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-[var(--border)]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]/50" />
+                <div className="flex-1 h-px bg-[var(--border)]" />
+              </div>
+
+              <button
+                type="submit"
+                disabled={helpSaving}
+                className="flex items-center gap-2 px-6 py-2.5 btn-gradient rounded-xl text-sm font-medium disabled:opacity-50 active:scale-[0.99] shadow-lg shadow-[var(--accent)]/20"
+              >
+                {helpSaving ? (
+                  <><Loader2 size={16} className="animate-spin" /> Saving...</>
+                ) : (
+                  <><Save size={16} /> Save Help Settings</>
                 )}
               </button>
             </form>

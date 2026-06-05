@@ -124,9 +124,34 @@ export const api = {
     },
   },
   settings: {
-    get: () => request<{ siteName: string }>("/settings"),
-    update: (data: { siteName: string }) =>
-      request<{ siteName: string }>("/settings", { method: "PUT", body: JSON.stringify(data) }),
+    get: () => request<{
+      siteName: string;
+      helpEmail?: string;
+      helpPhone?: string;
+      helpLocation?: string;
+      helpHours?: string;
+      helpFaq?: { question: string; answer: string }[];
+    }>("/settings"),
+    update: (data: {
+      siteName?: string;
+      helpEmail?: string;
+      helpPhone?: string;
+      helpLocation?: string;
+      helpHours?: string;
+      helpFaq?: { question: string; answer: string }[];
+    }) =>
+      request<{
+        siteName: string;
+        helpEmail?: string;
+        helpPhone?: string;
+        helpLocation?: string;
+        helpHours?: string;
+        helpFaq?: { question: string; answer: string }[];
+      }>("/settings", { method: "PUT", body: JSON.stringify(data) }),
+  },
+  help: {
+    submitContact: (data: { name: string; email: string; message: string }) =>
+      request<{ message: string }>("/help/contact", { method: "POST", body: JSON.stringify(data) }),
   },
   orders: {
     create: (data: {
