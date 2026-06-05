@@ -201,29 +201,6 @@ export default function FeaturedPage() {
                           </div>
                         )}
                       </div>
-                      <div className="p-3">
-                        <p className="text-[10px] text-[var(--accent)] font-medium uppercase tracking-wider truncate">
-                          {product.brand}
-                        </p>
-                        <p className="text-xs font-medium text-[var(--text-primary)] truncate mt-0.5">
-                          {product.title}
-                        </p>
-                        <p className="text-[10px] text-[var(--text-tertiary)] truncate capitalize mt-0.5">
-                          {product.category}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => toggleFeatured(product)}
-                        disabled={saving === product._id}
-                        className="w-full py-2 flex items-center justify-center gap-1.5 bg-[var(--accent-light)] text-[var(--accent)] text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-[var(--danger)] transition-all duration-300 disabled:opacity-50"
-                      >
-                        {saving === product._id ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : (
-                          <Crown size={12} fill="currentColor" />
-                        )}
-                        Remove from Featured
-                      </button>
                     </motion.div>
                   ))}
                 </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Zap, ShoppingBag, TrendingUp, ChevronRight, Clock, Package } from "lucide-react";
+import { Zap, ShoppingBag, TrendingUp, ChevronRight, Package } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
 import AboutSection from "@/components/AboutSection";
 import ProductCard from "@/components/ProductCard";
@@ -30,7 +30,7 @@ export default function HomePage() {
     <div>
       <HeroCarousel products={featured.slice(0, 5)} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20 space-y-24 md:space-y-28">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-20 space-y-16 md:space-y-28">
 
         {/* ─── About ─── */}
         <AboutSection />
@@ -43,7 +43,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-              className="text-center mb-12"
+              className="text-center mb-10 md:mb-12"
             >
               <div className="w-12 h-12 rounded-xl bg-[var(--accent-light)] flex items-center justify-center mx-auto mb-4">
                 <Package size={22} className="text-[var(--accent)]" />
@@ -51,7 +51,7 @@ export default function HomePage() {
               <span className="text-[10px] text-[var(--accent)] font-medium uppercase tracking-[0.2em]">
                 Curated Selection
               </span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-[var(--text-primary)] mt-3 mb-3 tracking-wide">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-[var(--text-primary)] mt-3 mb-3 tracking-wide">
                 Featured Products
               </h2>
               <div className="flex items-center justify-center gap-3">
@@ -64,7 +64,7 @@ export default function HomePage() {
               </p>
             </motion.div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {featured.slice(5, 13).map((p, i) => (
                 <ProductCard key={p._id} product={p} index={i} />
               ))}
@@ -100,7 +100,6 @@ export default function HomePage() {
             >
               <div>
                 <span className="text-[10px] text-[var(--text-secondary)] font-medium uppercase tracking-[0.2em] flex items-center gap-1.5">
-                  <Clock size={12} />
                   Fresh Drops
                 </span>
                 <h2 className="text-2xl md:text-3xl font-serif font-bold text-[var(--text-primary)] mt-2 tracking-wide">
@@ -116,7 +115,7 @@ export default function HomePage() {
               </Link>
             </motion.div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {latest.slice(0, 8).map((p, i) => (
                 <ProductCard key={p._id} product={p} index={i} />
               ))}
@@ -148,12 +147,12 @@ export default function HomePage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.25, 0.1, 0.25, 1] }}
-            className="relative overflow-hidden border border-[var(--border)] bg-[var(--bg-card)]/40 backdrop-blur-sm text-center py-16 md:py-20 px-6"
+            className="relative overflow-hidden border border-[var(--border)] bg-[var(--bg-card)]/40 backdrop-blur-sm text-center py-12 md:py-20 px-4 sm:px-6"
           >
             <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)]/60 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)]/30 to-transparent" />
 
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.08)_0%,transparent_70%)] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] sm:w-[700px] h-[400px] sm:h-[700px] bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.08)_0%,transparent_70%)] pointer-events-none" />
 
             {[...Array(6)].map((_, i) => (
               <motion.div
@@ -206,17 +205,17 @@ export default function HomePage() {
             />
 
             <div className="relative z-10 max-w-2xl mx-auto">
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-6 border border-[var(--accent)]/30">
-                <Zap size={28} className="text-[var(--accent)]" />
+              <div className="inline-flex items-center justify-center w-14 sm:w-16 h-14 sm:h-16 mb-5 sm:mb-6 border border-[var(--accent)]/30">
+                <Zap size={24} className="sm:size-[28px] text-[var(--accent)]" />
               </div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-[var(--text-primary)] mb-4 tracking-wide">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-[var(--text-primary)] mb-4 tracking-wide">
                 The Future of Tech Awaits
               </h2>
               <p className="text-sm md:text-base text-[var(--text-secondary)] mb-8 max-w-lg mx-auto leading-relaxed">
                 Join thousands of discerning customers who trust {siteName} for the finest curated technology.
                 Experience the difference precision makes.
               </p>
-              <div className="flex items-center justify-center gap-4">
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
                 <div className="relative group">
                   <div className="absolute -inset-[1px] bg-gradient-to-r from-[var(--accent)]/30 via-[var(--accent)]/60 to-[var(--accent)]/30 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-[2px]" />
                   <Link

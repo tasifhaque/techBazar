@@ -61,7 +61,9 @@ export default function ForgotPasswordPage() {
                 <Package size={22} className="text-white" />
               </div>
             </Link>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">{t("auth.forgot.title")}</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">
+              {t("auth.forgot.title")}
+            </h1>
             <p className="text-[var(--text-secondary)] text-sm">{t("auth.forgot.subtitle")}</p>
           </div>
 

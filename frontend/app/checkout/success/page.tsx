@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { CheckCircle, Package, ArrowLeft } from "lucide-react";
+import { Package, ArrowLeft } from "lucide-react";
 import { api, type Order } from "@/lib/api";
 import Link from "next/link";
 import PriceDisplay from "@/components/PriceDisplay";
@@ -24,10 +24,9 @@ function SuccessContent() {
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] flex items-center justify-center px-4">
       <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-md">
-        <div className="w-20 h-20 bg-[var(--accent-light)] rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle size={40} className="text-[var(--accent)]" />
-        </div>
-        <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Order Placed!</h1>
+        <h1 className="text-3xl font-bold text-[var(--text-primary)] mb-2">
+          Order Placed!
+        </h1>
         <p className="text-[var(--text-secondary)] mb-6">Thank you for your purchase. Your order has been confirmed.</p>
         {loading ? (
           <div className="animate-pulse space-y-3">

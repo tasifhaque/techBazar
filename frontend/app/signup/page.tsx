@@ -55,12 +55,9 @@ export default function SignupPage() {
         </div>
 
         <div className="bg-[var(--bg-card)] border border-[var(--border)] p-8 md:p-10">
-          <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-xl bg-[var(--accent-light)] flex items-center justify-center">
-              <UserPlus size={18} className="text-[var(--accent)]" />
-            </div>
-            <h1 className="text-xl md:text-2xl font-serif font-bold text-[var(--text-primary)] tracking-wide">{t("auth.signup.title")}</h1>
-          </div>
+          <h1 className="text-xl md:text-2xl font-serif font-bold text-[var(--text-primary)] tracking-wide mb-1">
+            {t("auth.signup.title")}
+          </h1>
           <p className="text-sm text-[var(--text-secondary)] mb-6">{t("auth.signup.subtitle")}</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

@@ -13,7 +13,6 @@ import {
   Loader2,
   Eye,
   EyeOff,
-  Crown,
   KeyRound,
   AtSign,
   HelpCircle,
@@ -211,10 +210,9 @@ export default function SettingsPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-1">
-            <Crown size={20} className="text-[var(--accent)]" />
-            <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)] tracking-tight">Settings</h1>
-          </div>
+          <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)] tracking-tight mb-1">
+            Settings
+          </h1>
           <p className="text-sm text-[var(--text-secondary)] ml-1">Manage your admin profile and security</p>
         </div>
 

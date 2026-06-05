@@ -230,3 +230,9 @@ export interface AdminListResponse<T> {
   data: T[];
   pagination: { total: number; page: number; limit: number; totalPages: number };
 }
+
+export function getProductImageUrl(url: string): string {
+  if (!url) return "/placeholder.svg";
+  if (url.startsWith("/uploads/")) return `${BACKEND_URL}${url}`;
+  return url;
+}

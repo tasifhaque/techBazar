@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ShoppingCart, Zap } from "lucide-react";
-import type { Product } from "@/lib/api";
+import { type Product } from "@/lib/api";
 import { useCart } from "@/store/cart";
 import { useQuickBuy } from "@/store/quickBuy";
 import { useAuth } from "@/store/auth";
@@ -68,7 +68,7 @@ export default function HeroCarousel({ products }: Props) {
 
   if (products.length === 0) {
     return (
-      <div className="h-[90vh] min-h-[600px] flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)]">
+      <div className="h-[80vh] min-h-[420px] sm:min-h-[500px] lg:min-h-[600px] flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)]">
         <p className="text-lg text-[var(--text-tertiary)] font-serif">{t("hero.no_products")}</p>
       </div>
     );
@@ -79,7 +79,7 @@ export default function HeroCarousel({ products }: Props) {
   const image = product.images?.[0] || null;
 
   return (
-    <div className="relative h-[90vh] min-h-[600px] max-h-[1000px] overflow-hidden bg-[#050505]">
+    <div className="relative h-[80vh] min-h-[420px] sm:min-h-[500px] lg:min-h-[600px] max-h-[1000px] overflow-hidden bg-[#050505]">
       <AnimatePresence mode="wait">
         <motion.div
           key={current}
@@ -111,7 +111,7 @@ export default function HeroCarousel({ products }: Props) {
 
           {/* ─── Editorial content overlay ─── */}
           <div className="relative z-10 w-full h-full flex items-end">
-            <div className="w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-16 pb-16 md:pb-24">
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-10 lg:px-16 pb-12 sm:pb-16 md:pb-24">
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -119,7 +119,7 @@ export default function HeroCarousel({ products }: Props) {
                 className="max-w-2xl"
               >
                 {/* Issue number / category */}
-                <div className="flex items-center gap-4 mb-5">
+                <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
                   <span className="text-[9px] text-white/40 uppercase tracking-[0.4em] font-mono">
                     {product.category}
                   </span>
@@ -130,20 +130,20 @@ export default function HeroCarousel({ products }: Props) {
                 </div>
 
                 {/* Magazine-style title */}
-                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-bold leading-[0.9] tracking-tight text-white mb-4">
+                <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-bold leading-[0.9] tracking-tight text-white mb-4">
                   {product.title}
                 </h1>
 
                 {/* Thin decorative line */}
-                <div className="w-16 h-[1.5px] bg-gradient-to-r from-[var(--accent)]/60 to-transparent mb-5" />
+                <div className="w-12 sm:w-16 h-[1.5px] bg-gradient-to-r from-[var(--accent)]/60 to-transparent mb-4 sm:mb-5" />
 
                 {/* Description */}
-                <p className="text-sm md:text-base text-white/30 max-w-lg leading-relaxed mb-8 line-clamp-2 font-light tracking-wide">
+                <p className="text-sm md:text-base text-white/30 max-w-lg leading-relaxed mb-6 sm:mb-8 line-clamp-2 font-light tracking-wide">
                   {product.description}
                 </p>
 
                 {/* Price and CTAs */}
-                <div className="flex flex-wrap items-center gap-6">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-6">
                   <div className="flex items-baseline gap-3">
                     <span className="text-2xl md:text-3xl font-serif font-bold text-white">
                       <PriceDisplay amount={discountedPrice} />
@@ -160,29 +160,29 @@ export default function HeroCarousel({ products }: Props) {
                     )}
                   </div>
 
-                  <div className="flex gap-2.5">
+                  <div className="flex gap-2 sm:gap-2.5">
                     <button
                       onClick={() => handleAddToCart(product)}
                       disabled={product.stock === 0}
-                      className={`flex items-center gap-2 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition-all duration-400 ${
+                      className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.2em] transition-all duration-400 ${
                         !isAuthenticated
                           ? "border border-white/10 text-white/30 hover:border-white/30 hover:text-white/50"
                           : "group border border-white/15 text-white/70 hover:bg-white hover:text-[#0a0a0a]"
                       }`}
                     >
-                      <ShoppingCart size={12} />
+                      <ShoppingCart size={11} className="sm:size-[12px]" />
                       {t("hero.add_to_cart")}
                     </button>
                     <button
                       onClick={() => handleBuyNow(product)}
                       disabled={product.stock === 0}
-                      className={`flex items-center gap-2 px-5 py-2.5 text-[10px] font-semibold uppercase tracking-[0.2em] transition-all duration-400 ${
+                      className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-5 py-2 sm:py-2.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-[0.2em] transition-all duration-400 ${
                         !isAuthenticated
                           ? "bg-gradient-to-r from-[var(--accent)]/20 to-[var(--accent-hover)]/20 text-white/30 hover:from-[var(--accent)]/30 hover:to-[var(--accent-hover)]/30 hover:text-white/50"
                           : "group bg-gradient-to-r from-[var(--accent)] to-[var(--accent-hover)] text-[#0a0a0a] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)]"
                       }`}
                     >
-                      <Zap size={12} />
+                      <Zap size={11} className="sm:size-[12px]" />
                       {t("hero.buy_now")}
                     </button>
                   </div>
@@ -205,13 +205,13 @@ export default function HeroCarousel({ products }: Props) {
       {/* Navigation */}
       {products.length > 1 && (
         <>
-          <button onClick={prev} className="absolute left-5 top-1/2 -translate-y-1/2 p-2 text-white/10 hover:text-white/40 transition-all duration-300 z-20">
-            <ChevronLeft size={20} />
+          <button onClick={prev} className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 p-2 sm:p-3 text-white/20 hover:text-white/50 transition-all duration-300 z-20">
+            <ChevronLeft size={18} className="sm:size-[20px]" />
           </button>
-          <button onClick={next} className="absolute right-5 top-1/2 -translate-y-1/2 p-2 text-white/10 hover:text-white/40 transition-all duration-300 z-20">
-            <ChevronRight size={20} />
+          <button onClick={next} className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 p-2 sm:p-3 text-white/20 hover:text-white/50 transition-all duration-300 z-20">
+            <ChevronRight size={18} className="sm:size-[20px]" />
           </button>
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
+          <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3 z-20">
             {products.map((_, i) => (
               <button
                 key={i}

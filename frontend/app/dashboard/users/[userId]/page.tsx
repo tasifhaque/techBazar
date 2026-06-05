@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  Package,
   ShoppingCart,
   DollarSign,
   Calendar,
@@ -15,7 +14,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { api, type User, type Order } from "@/lib/api";
-import { BACKEND_URL } from "@/lib/api";
 
 const shimmer = `relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-[var(--accent)]/10 before:to-transparent before:animate-[shimmer_2s_infinite]`;
 
@@ -98,7 +96,9 @@ export default function UserOrdersPage() {
               <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
             </div>
             <div>
-              <h1 className="text-2xl font-serif font-bold text-[var(--text-primary)]">{user.name}</h1>
+              <h1 className="text-2xl font-serif font-bold text-[var(--text-primary)]">
+                {user.name}
+              </h1>
               <p className="text-sm text-[var(--text-secondary)]">{user.email}</p>
               <div className="flex items-center gap-3 mt-1.5 text-xs text-[var(--text-tertiary)]">
                 <span className="capitalize">{user.gender}</span>
@@ -110,8 +110,7 @@ export default function UserOrdersPage() {
         </div>
 
         {/* Orders */}
-        <h2 className="text-xl font-serif font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-          <Package size={20} className="text-[var(--accent)]" />
+        <h2 className="text-xl font-serif font-bold text-[var(--text-primary)] mb-4">
           Orders ({orders.length})
         </h2>
 
@@ -163,7 +162,7 @@ export default function UserOrdersPage() {
                       <div key={j} className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-lg overflow-hidden bg-[var(--bg-tertiary)] shrink-0 border border-[var(--border)]">
                           <img
-                            src={item.image ? (item.image.startsWith("http") ? item.image : `${BACKEND_URL}${item.image}`) : "/placeholder.svg"}
+                            src={item.image}
                             alt={item.title}
                             className="w-full h-full object-cover"
                             onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }}

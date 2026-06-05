@@ -28,13 +28,16 @@ app.use(
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-// Serve uploaded files
+// Serve uploaded files (fallback to placeholder if missing)
 app.get("/uploads/*", async (c) => {
   const filename = c.req.path.replace("/uploads/", "");
   const filePath = `./uploads/${filename}`;
   const file = Bun.file(filePath);
   const exists = await file.exists();
-  if (!exists) return c.notFound();
+  if (!exists) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800"><rect width="800" height="800" fill="#1a1a2e"/><text x="400" y="380" text-anchor="middle" fill="#4a4a6a" font-size="60" font-family="sans-serif">Image</text><text x="400" y="450" text-anchor="middle" fill="#4a4a6a" font-size="60" font-family="sans-serif">Not Found</text></svg>`;
+    return new Response(svg, { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" } });
+  }
   return new Response(file);
 });
 

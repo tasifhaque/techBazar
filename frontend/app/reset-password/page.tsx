@@ -103,7 +103,9 @@ function ResetContent() {
                 <Package size={22} className="text-white" />
               </div>
             </Link>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">Reset Password</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">
+              Reset Password
+            </h1>
             <p className="text-[var(--text-secondary)] text-sm">Enter the code sent to <strong>{email}</strong> and your new password.</p>
           </div>
 

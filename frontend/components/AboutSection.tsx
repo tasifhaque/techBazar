@@ -15,7 +15,7 @@ export default function AboutSection() {
   ];
 
   return (
-    <section className="py-16 md:py-20 relative">
+    <section className="py-12 md:py-20 relative">
       {/* Gold divider above section */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-[1px] bg-gradient-to-r from-transparent via-[var(--accent)]/50 to-transparent" />
 
@@ -25,7 +25,7 @@ export default function AboutSection() {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-        className="text-center mb-14"
+        className="text-center mb-10 md:mb-14"
       >
         <span className="inline-block px-4 py-1 border border-[var(--accent)]/30 text-[var(--accent)] text-[10px] font-medium uppercase tracking-[0.2em] mb-4 backdrop-blur-sm bg-[var(--accent)]/5">
           {t("home.about.badge")}
@@ -39,7 +39,7 @@ export default function AboutSection() {
       </motion.div>
 
       {/* Feature cards grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 md:gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-5 md:gap-6">
         {features.map((feature, i) => (
           <motion.div
             key={i}
@@ -47,7 +47,7 @@ export default function AboutSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: i * 0.12, duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-            className="group text-center p-6 md:p-8 bg-[var(--bg-card)]/60 backdrop-blur-xl border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_0_32px_rgba(212,175,55,0.06)]"
+            className="group text-center p-4 sm:p-6 md:p-8 bg-[var(--bg-card)]/60 backdrop-blur-xl border border-[var(--border)] hover:border-[var(--accent)]/30 transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_0_32px_rgba(212,175,55,0.06)]"
           >
             {/* Icon container — rotates on hover */}
             <div className="inline-flex p-3.5 border border-[var(--accent)]/20 text-[var(--accent)] mb-5 transition-all duration-500 group-hover:border-[var(--accent)]/50 group-hover:shadow-[0_0_16px_rgba(212,175,55,0.1)] group-hover:bg-[var(--accent)]/5">

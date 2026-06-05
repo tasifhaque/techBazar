@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { ShoppingCart, Zap, Package } from "lucide-react";
-import type { Product } from "@/lib/api";
+import { type Product } from "@/lib/api";
 import { useCart } from "@/store/cart";
 import { useQuickBuy } from "@/store/quickBuy";
 import { useAuth } from "@/store/auth";

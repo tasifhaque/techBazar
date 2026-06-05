@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowLeft, CreditCard, ShieldCheck, Truck, Lock, CheckCircle, ShoppingCart, Loader2 } from "lucide-react";
+import { ArrowLeft, CreditCard, ShieldCheck, Truck, Lock, CheckCircle, Loader2 } from "lucide-react";
 import { useCart } from "@/store/cart";
 import { useQuickBuy } from "@/store/quickBuy";
 import { useAuth } from "@/store/auth";
@@ -31,7 +31,9 @@ export default function CheckoutPage() {
   const quickBuyItem = useQuickBuy((s) => s.item);
   const clearQuickBuy = useQuickBuy((s) => s.clearItem);
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
-  const [hydrated, setHydrated] = useState(useCart.persist.hasHydrated());
+  const [hydrated, setHydrated] = useState(
+    typeof window !== "undefined" ? useCart.persist.hasHydrated() : false
+  );
 
   // Decide which items to display for checkout
   const isQuickBuy = !!(quickBuyItem && !authLoading && hydrated);
@@ -116,12 +118,9 @@ export default function CheckoutPage() {
         </Link>
 
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-[var(--accent-light)] flex items-center justify-center">
-              <ShoppingCart size={20} className="text-[var(--accent)]" />
-            </div>
-            <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight">{t("checkout.title")}</h1>
-          </div>
+          <h1 className="text-3xl font-bold text-[var(--text-primary)] tracking-tight mb-8">
+            {t("checkout.title")}
+          </h1>
 
           <div className="flex items-center gap-3 mb-10">
             {[

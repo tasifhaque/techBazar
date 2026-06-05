@@ -253,8 +253,9 @@ export default function DashboardPage() {
         <motion.div variants={cardVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <Crown size={22} className="text-[var(--accent)]" />
-              <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)] tracking-tight">Dashboard</h1>
+              <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)] tracking-tight">
+                Dashboard
+              </h1>
             </div>
             <p className="text-sm text-[var(--text-secondary)] ml-1">
               Welcome back, <span className="text-[var(--text-primary)] font-medium">{user.name}</span>. Here is your store overview.

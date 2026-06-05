@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { RefreshCw, Save, Trash2, AlertTriangle, Eye, EyeOff, Lock, Check, X, Phone, Calendar, User, Package } from "lucide-react";
+import { RefreshCw, Save, Trash2, AlertTriangle, Eye, EyeOff, Lock, Check, X, Phone, Calendar, Package } from "lucide-react";
 import { useAuth } from "@/store/auth";
-import { api } from "@/lib/api";
+import { api, type Order } from "@/lib/api";
 import { ProfileSkeleton } from "@/components/SkeletonLoader";
 import PriceDisplay from "@/components/PriceDisplay";
 import { useI18n } from "@/lib/i18n-context";
@@ -114,11 +114,10 @@ export default function ProfilePage() {
             {t("profile.badge")}
           </span>
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-[var(--accent-light)] flex items-center justify-center shrink-0">
-              <User size={24} className="text-[var(--accent)]" />
-            </div>
             <div>
-              <h1 className="text-3xl md:text-4xl font-serif font-bold text-[var(--text-primary)] tracking-wide">{t("profile.title")}</h1>
+              <h1 className="text-3xl md:text-4xl font-serif font-bold text-[var(--text-primary)] tracking-wide">
+                {t("profile.title")}
+              </h1>
               <p className="text-sm text-[var(--text-secondary)] mt-1">{t("profile.subtitle")}</p>
             </div>
           </div>

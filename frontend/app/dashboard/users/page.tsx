@@ -119,10 +119,9 @@ export default function UsersPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-3 mb-1">
-              <Crown size={20} className="text-[var(--accent)]" />
-              <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)] tracking-tight">Users</h1>
-            </div>
+            <h1 className="text-3xl font-serif font-bold text-[var(--text-primary)] tracking-tight mb-1">
+              Users
+            </h1>
             <p className="text-sm text-[var(--text-secondary)] ml-1">
               {total > 0 ? (
                 <><span className="text-[var(--text-primary)] font-medium">{total}</span> registered users</>

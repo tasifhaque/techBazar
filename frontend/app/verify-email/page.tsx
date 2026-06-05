@@ -3,7 +3,7 @@
 import { useState, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Mail, Shield, RefreshCw, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
+import { Shield, RefreshCw, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/store/auth";
 import Link from "next/link";
@@ -115,10 +115,9 @@ function VerifyContent() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md">
         <div className="bg-[var(--bg-card)] rounded-3xl border border-[var(--border)] p-8 shadow-sm">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 bg-[var(--accent-light)] rounded-2xl flex items-center justify-center">
-              <Mail size={32} className="text-[var(--accent)]" />
-            </div>
-            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Verify Your Email</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">
+              Verify Your Email
+            </h1>
             <p className="text-sm text-[var(--text-secondary)] mt-2">
               Enter the 6-digit code sent to <strong className="text-[var(--text-primary)]">{email}</strong>
             </p>

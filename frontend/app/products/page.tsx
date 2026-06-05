@@ -105,9 +105,6 @@ function ProductsContent() {
             </div>
 
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-14 h-14 rounded-xl bg-[var(--accent-light)] flex items-center justify-center shrink-0">
-                <Package size={26} className="text-[var(--accent)]" />
-              </div>
               <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-serif font-bold text-[var(--text-primary)] tracking-tight leading-[0.95]">
                 {activeCategoryLabel || (searchQuery ? `"${searchQuery}"` : t("products.title"))}
               </h1>
@@ -312,14 +309,14 @@ function ProductsContent() {
           <div className="w-[3px] h-3 bg-[var(--accent)]/60" />
           <span className="text-[9px] text-[var(--text-tertiary)] uppercase tracking-[0.3em] font-medium">Categories</span>
         </div>
-        <div className="flex md:flex-wrap gap-2 overflow-x-auto md:overflow-visible pb-1">
+        <div className="flex flex-wrap gap-2 pb-1">
           <motion.button
             whileHover={{ scale: 1.02 }}
             onClick={() => { setActiveCategory(""); setActiveBrand(""); }}
             className={`flex-shrink-0 px-5 py-2.5 text-[10px] font-medium tracking-[0.15em] uppercase transition-all duration-300 ${
               !activeCategory && !activeBrand
                 ? "bg-[var(--accent)] text-[#0a0a0a] shadow-[0_0_20px_rgba(212,175,55,0.2)]"
-                : "border border-[var(--border)]/60 text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5"
+                : "text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5"
             }`}
           >
             {t("products.filter_all")}
@@ -343,8 +340,8 @@ function ProductsContent() {
                     activeCategory === c.value && !activeBrand
                       ? "bg-[var(--accent)] text-[#0a0a0a] shadow-[0_0_20px_rgba(212,175,55,0.2)]"
                       : activeBrand && products.some((p) => p.category === c.value)
-                        ? "bg-[var(--accent)]/15 text-[var(--accent)] border border-[var(--accent)]/40"
-                        : "border border-[var(--border)]/60 text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:border-[var(--accent)]/40 hover:bg-[var(--accent)]/5"
+                        ? "bg-[var(--accent)]/15 text-[var(--accent)]"
+                        : "text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5"
                   }`}
                 >
                   {c.label}
@@ -356,7 +353,7 @@ function ProductsContent() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 4 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-1.5 min-w-[180px] bg-[var(--bg-card)] border border-[var(--border)] shadow-2xl backdrop-blur-xl z-[999] py-1.5 max-h-[300px] overflow-y-auto"
+                    className="absolute top-full left-0 mt-1.5 min-w-[180px] max-w-[calc(100vw-2rem)] sm:max-w-none bg-[var(--bg-card)] border border-[var(--border)] shadow-2xl backdrop-blur-xl z-[999] py-1.5 max-h-[300px] overflow-y-auto"
                   >
                     {brands.map((b) => (
                       <button
@@ -386,7 +383,7 @@ function ProductsContent() {
 
       {/* ─── Active Filter Chips ─── */}
       {hasFilters && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex items-center gap-2">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-wrap items-center gap-2">
           {activeCategory && (
             <motion.span
               initial={{ opacity: 0, scale: 0.9 }}
@@ -493,7 +490,7 @@ function ProductsContent() {
                         initial="hidden"
                         animate="show"
                         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                        className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-10"
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8"
                       >
                         {sorted.map((p, i) => (
                           <motion.div
@@ -514,7 +511,7 @@ function ProductsContent() {
                 initial="hidden"
                 animate="show"
                 variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-10"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8"
               >
                 {[...products].sort((a, b) => b.price - a.price).map((p, i) => (
                   <motion.div
@@ -559,7 +556,7 @@ function ProductsContent() {
                     initial="hidden"
                     animate="show"
                     variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                    className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8 md:gap-10"
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8"
                   >
                     {sorted.map((p, i) => (
                       <motion.div
