@@ -238,6 +238,10 @@ export default function HelpPage() {
   const { t } = useI18n();
   const { isAuthenticated } = useAuth();
 
+  useEffect(() => {
+    document.title = "Help";
+  }, []);
+
   /* ── State ────────────────────────────────── */
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [formData, setFormData] = useState<ContactData>({

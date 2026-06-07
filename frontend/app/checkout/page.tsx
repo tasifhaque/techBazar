@@ -31,6 +31,10 @@ export default function CheckoutPage() {
   const quickBuyItem = useQuickBuy((s) => s.item);
   const clearQuickBuy = useQuickBuy((s) => s.clearItem);
   const { isAuthenticated, isLoading: authLoading, user } = useAuth();
+  useEffect(() => {
+    document.title = "Checkout";
+  }, []);
+
   const [hydrated, setHydrated] = useState(
     typeof window !== "undefined" ? useCart.persist.hasHydrated() : false
   );

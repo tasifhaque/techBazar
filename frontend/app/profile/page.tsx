@@ -37,6 +37,10 @@ export default function ProfilePage() {
   const router = useRouter();
 
   useEffect(() => {
+    document.title = "Profile";
+  }, []);
+
+  useEffect(() => {
     if (!isLoading && !isAuthenticated) router.push("/login");
   }, [isLoading, isAuthenticated, router]);
 

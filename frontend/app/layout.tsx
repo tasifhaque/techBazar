@@ -34,6 +34,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${siteName} | Premium Tech Atelier`,
     description: `Curated selection of the world's finest technology — smartphones, laptops, monitors, and PC components.`,
+    icons: {
+      icon: "/favicon.svg",
+    },
   };
 }
 
