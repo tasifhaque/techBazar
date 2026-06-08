@@ -28,7 +28,11 @@ app.use(
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-// Serve uploaded files (fallback to placeholder if missing)
+// ─── Backward-compat: serve legacy uploaded images from disk ────────────────
+// NOTE: New uploads are stored as base64 data URLs in MongoDB.
+// This route exists only for products that haven't been migrated yet.
+// Run POST /api/admin/migrate-images to convert all legacy images to data URLs,
+// then this route can be safely removed.
 app.get("/uploads/*", async (c) => {
   const filename = c.req.path.replace("/uploads/", "");
   const filePath = `./uploads/${filename}`;
@@ -38,7 +42,12 @@ app.get("/uploads/*", async (c) => {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800"><rect width="800" height="800" fill="#1a1a2e"/><text x="400" y="380" text-anchor="middle" fill="#4a4a6a" font-size="60" font-family="sans-serif">Image</text><text x="400" y="450" text-anchor="middle" fill="#4a4a6a" font-size="60" font-family="sans-serif">Not Found</text></svg>`;
     return new Response(svg, { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" } });
   }
-  return new Response(file);
+  return new Response(file, {
+    headers: {
+      "Cache-Control": "public, max-age=604800, immutable",
+      "Content-Type": file.type || "application/octet-stream",
+    },
+  });
 });
 
 app.route("/api/auth", authRoutes);

@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Zap, ShoppingBag, TrendingUp, ChevronRight, Package } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
-import AboutSection from "@/components/AboutSection";
 import ProductCard from "@/components/ProductCard";
 import { api, type Product } from "@/lib/api";
 import { useSite } from "@/store/site";
 import Link from "next/link";
+
+// Lazy-load below-the-fold components for faster initial paint
+const AboutSection = dynamic(() => import("@/components/AboutSection"), {
+  ssr: false,
+});
+const PromoSection = dynamic(() => import("@/components/PromoSection"), {
+  ssr: false,
+});
 
 export default function HomePage() {
   const { siteName } = useSite();
@@ -16,21 +24,30 @@ export default function HomePage() {
   const [latest, setLatest] = useState<Product[]>([]);
 
   useEffect(() => {
-    api.products
-      .list({ limit: "20", featured: "true" })
-      .then((d) => setFeatured(d.products))
-      .catch(() => {});
-    api.products
-      .list({ limit: "8", sort: "createdAt" })
-      .then((d) => setLatest(d.products.filter((p) => !p.featured)))
+    // Parallelize API calls to avoid waterfall
+    Promise.all([
+      api.products.list({ limit: "15", featured: "true" }),
+      api.products.list({ limit: "8", sort: "createdAt" }),
+    ])
+      .then(([featuredRes, latestRes]) => {
+        setFeatured(featuredRes.products);
+        setLatest(latestRes.products.filter((p) => !p.featured));
+      })
       .catch(() => {});
   }, []);
 
+  const heroProducts = useMemo(() => featured.slice(0, 5), [featured]);
+  const gridProducts = useMemo(() => featured.slice(5, 13), [featured]);
+  const latestProducts = useMemo(() => latest.slice(0, 8), [latest]);
+
   return (
     <div>
-      <HeroCarousel products={featured.slice(0, 5)} />
+      <HeroCarousel products={heroProducts} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-20 space-y-16 md:space-y-28">
+
+        {/* ─── Promo Banners – below the fold ─── */}
+        <PromoSection />
 
         {/* ─── About ─── */}
         <AboutSection />
@@ -65,7 +82,7 @@ export default function HomePage() {
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-              {featured.slice(5, 13).map((p, i) => (
+              {gridProducts.map((p, i) => (
                 <ProductCard key={p._id} product={p} index={i} />
               ))}
             </div>
@@ -116,7 +133,7 @@ export default function HomePage() {
             </motion.div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-              {latest.slice(0, 8).map((p, i) => (
+              {latestProducts.map((p, i) => (
                 <ProductCard key={p._id} product={p} index={i} />
               ))}
             </div>

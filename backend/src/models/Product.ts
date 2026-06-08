@@ -37,5 +37,6 @@ const ProductSchema = new Schema<IProduct>(
 );
 
 ProductSchema.index({ category: 1, brand: 1, model: 1 }, { unique: true });
+ProductSchema.index({ featured: 1, featuredOrder: 1, createdAt: -1 });
 
 export const Product = mongoose.model<IProduct>("Product", ProductSchema);

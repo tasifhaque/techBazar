@@ -3,13 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, ShoppingCart, Zap } from "lucide-react";
-import { type Product } from "@/lib/api";
+import { type Product, getProductImageUrl } from "@/lib/api";
 import { useCart } from "@/store/cart";
 import { useQuickBuy } from "@/store/quickBuy";
 import { useAuth } from "@/store/auth";
 import { useToast } from "@/store/toast";
 import { useRouter } from "next/navigation";
 import PriceDisplay from "@/components/PriceDisplay";
+import ProductImage from "@/components/ProductImage";
 import { useI18n } from "@/lib/i18n-context";
 
 interface Props {
@@ -48,7 +49,7 @@ export default function HeroCarousel({ products }: Props) {
     }
     addItem({
       productId: product._id, title: product.title, price: product.price,
-      discountPercentage: product.discountPercentage, image: product.images?.[0] || "",
+      discountPercentage: product.discountPercentage, image: getProductImageUrl(product),
     });
   };
 
@@ -61,7 +62,7 @@ export default function HeroCarousel({ products }: Props) {
     }
     setQuickBuyItem({
       productId: product._id, title: product.title, price: product.price,
-      discountPercentage: product.discountPercentage, image: product.images?.[0] || "", quantity: 1,
+      discountPercentage: product.discountPercentage, image: getProductImageUrl(product), quantity: 1,
     });
     router.push("/checkout");
   };
@@ -76,7 +77,7 @@ export default function HeroCarousel({ products }: Props) {
 
   const product = products[current];
   const discountedPrice = product.price * (1 - product.discountPercentage / 100);
-  const image = product.images?.[0] || null;
+  const image = getProductImageUrl(product);
 
   return (
     <div className="relative h-[80vh] min-h-[420px] sm:min-h-[500px] lg:min-h-[600px] max-h-[1000px] overflow-hidden bg-[#050505]">
@@ -92,11 +93,14 @@ export default function HeroCarousel({ products }: Props) {
           {/* ─── Full-bleed editorial image ─── */}
           {image ? (
             <div className="absolute inset-0">
-              <img
+              <ProductImage
                 src={image}
                 alt=""
-                loading="lazy"
-                className="w-full h-full object-cover"
+                fill
+                sizes="100vw"
+                priority={current === 0}
+                loading={current === 0 ? "eager" : "lazy"}
+                className="object-cover"
               />
               {/* Dark gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/50 to-[#050505]/30" />

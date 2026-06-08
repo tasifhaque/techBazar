@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useRef } from "react";
+import { useState, useEffect, Suspense, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, X, ChevronDown, Package } from "lucide-react";
@@ -33,24 +33,49 @@ function ProductsContent() {
   const [activeCategory, setActiveCategory] = useState(sp.get("category") || "");
   const [activeBrand, setActiveBrand] = useState(sp.get("brand") || "");
   const [searchQuery, setSearchQuery] = useState(sp.get("search") || "");
+  const [debouncedSearch, setDebouncedSearch] = useState(sp.get("search") || "");
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  // Debounce search input to avoid API call on every keystroke
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value);
+    }, 350);
+  }, []);
+
+  // Clear debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  // Sync debouncedSearch to searchQuery if cleared externally
+  useEffect(() => {
+    if (searchQuery === "" && debouncedSearch !== "") {
+      setDebouncedSearch("");
+    }
+  }, [searchQuery, debouncedSearch]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    const params: Record<string, string> = { limit: "100" };
+    const params: Record<string, string> = { limit: "40" };
     if (activeCategory) params.category = activeCategory;
     if (activeBrand) params.brand = activeBrand;
-    if (searchQuery) params.search = searchQuery;
+    if (debouncedSearch) params.search = debouncedSearch;
     api.products
       .list(params)
       .then((d) => { if (!cancelled) setProducts(d.products); })
       .catch(() => { if (!cancelled) setProducts([]); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [activeCategory, activeBrand, searchQuery]);
+  }, [activeCategory, activeBrand, debouncedSearch]);
 
   useEffect(() => {
     document.title = activeCategory
@@ -58,33 +83,56 @@ function ProductsContent() {
       : "Products";
   }, [activeCategory, categories]);
 
-  const clearAll = () => { setActiveCategory(""); setActiveBrand(""); setSearchQuery(""); };
-  const hasFilters = activeCategory || activeBrand || searchQuery;
+  const clearAll = useCallback(() => {
+    setActiveCategory("");
+    setActiveBrand("");
+    setSearchQuery("");
+    setDebouncedSearch("");
+  }, []);
 
-  const grouped = categories
-    .map((c) => ({ ...c, items: products.filter((p) => p.category === c.value) }))
-    .filter((c) => c.items.length > 0);
+  const clearSearch = useCallback(() => {
+    setSearchQuery("");
+    setDebouncedSearch("");
+  }, []);
+
+  const hasFilters = activeCategory || activeBrand || debouncedSearch;
+
+  // Memoize derived data
+  const grouped = useMemo(
+    () =>
+      categories
+        .map((c) => ({ ...c, items: products.filter((p) => p.category === c.value) }))
+        .filter((c) => c.items.length > 0),
+    [categories, products]
+  );
 
   const activeCategoryLabel = activeCategory
     ? categories.find((c) => c.value === activeCategory)?.label || activeCategory
     : null;
 
   // Compute unique brands per category from loaded products
-  const brandsMap: Record<string, string[]> = {};
-  for (const p of products) {
-    if (!brandsMap[p.category]) brandsMap[p.category] = [];
-    if (!brandsMap[p.category].includes(p.brand)) brandsMap[p.category].push(p.brand);
-  }
+  const brandsMap = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    for (const p of products) {
+      if (!map[p.category]) map[p.category] = [];
+      if (!map[p.category].includes(p.brand)) map[p.category].push(p.brand);
+    }
+    return map;
+  }, [products]);
 
   // Group by brand when viewing a specific category
-  const groupedByBrand = activeCategory
-    ? (brandsMap[activeCategory] || [])
-        .map((b) => ({
-          brand: b,
-          items: products.filter((p) => p.brand === b),
-        }))
-        .filter((g) => g.items.length > 0)
-    : [];
+  const groupedByBrand = useMemo(
+    () =>
+      activeCategory
+        ? (brandsMap[activeCategory] || [])
+            .map((b) => ({
+              brand: b,
+              items: products.filter((p) => p.brand === b),
+            }))
+            .filter((g) => g.items.length > 0)
+        : [],
+    [activeCategory, brandsMap, products]
+  );
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)]">
@@ -110,14 +158,14 @@ function ProductsContent() {
               </h1>
             </div>
 
-            <p className="text-sm text-[var(--text-tertiary)] max-w-xl leading-relaxed mb-8">
-              {loading
-                ? t("products.searching")
-                : searchQuery
-                  ? `${products.length} result${products.length !== 1 ? "s" : ""} for "${searchQuery}"`
-                  : `A curated selection of ${products.length} premium technology products`
-              }
-            </p>
+              <p className="text-sm text-[var(--text-tertiary)] max-w-xl leading-relaxed mb-8">
+                {loading
+                  ? t("products.searching")
+                  : debouncedSearch
+                    ? `${products.length} result${products.length !== 1 ? "s" : ""} for "${debouncedSearch}"`
+                    : `A curated selection of ${products.length} premium technology products`
+                }
+              </p>
 
             {/* Search bar — luxury edition */}
             <div className="relative max-w-2xl">
@@ -226,7 +274,7 @@ function ProductsContent() {
                 <input
                   ref={inputRef}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   placeholder={t("products.search_placeholder")}
@@ -242,7 +290,7 @@ function ProductsContent() {
                       animate={{ opacity: 1, scale: 1, x: 0 }}
                       exit={{ opacity: 0, scale: 0.7, x: 10 }}
                       transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                      onClick={() => setSearchQuery("")}
+                      onClick={clearSearch}
                       className="mr-3 p-1.5 rounded-full bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] transition-colors duration-300 relative z-10 group"
                     >
                       <motion.div
@@ -310,8 +358,7 @@ function ProductsContent() {
           <span className="text-[9px] text-[var(--text-tertiary)] uppercase tracking-[0.3em] font-medium">Categories</span>
         </div>
         <div className="flex flex-wrap gap-2 pb-1">
-          <motion.button
-            whileHover={{ scale: 1.02 }}
+          <button
             onClick={() => { setActiveCategory(""); setActiveBrand(""); }}
             className={`flex-shrink-0 px-5 py-2.5 text-[10px] font-medium tracking-[0.15em] uppercase transition-all duration-300 ${
               !activeCategory && !activeBrand
@@ -320,7 +367,7 @@ function ProductsContent() {
             }`}
           >
             {t("products.filter_all")}
-          </motion.button>
+          </button>
           {categories.map((c) => {
             const brands = brandsMap[c.value] || [];
             return (
@@ -330,8 +377,7 @@ function ProductsContent() {
                 onMouseEnter={() => setHoveredCategory(c.value)}
                 onMouseLeave={() => setHoveredCategory(null)}
               >
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
+                <button
                   onClick={() => {
                     setActiveCategory(activeCategory === c.value ? "" : c.value);
                     setActiveBrand("");
@@ -346,7 +392,7 @@ function ProductsContent() {
                 >
                   {c.label}
                   {brands.length > 0 && <ChevronDown size={9} className="opacity-40" />}
-                </motion.button>
+                </button>
                 {hoveredCategory === c.value && brands.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, y: 4 }}

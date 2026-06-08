@@ -3,6 +3,8 @@ import { Product } from "../models";
 
 const router = new Hono();
 
+// ─── Routes ─────────────────────────────────────────────────────────────────
+
 router.get("/", async (c) => {
   try {
     const { category, brand, search, sort, featured, page: pageStr = "1", limit: limitStr = "12" } = c.req.query();
@@ -31,7 +33,16 @@ router.get("/", async (c) => {
     else if (sort === "discount") sortOption = { discountPercentage: -1 };
 
     const [products, total] = await Promise.all([
-      Product.find(filter).sort(sortOption).skip(skip).limit(limit),
+      Product.aggregate([
+        { $match: filter },
+        // Compute imageCount while images still available
+        { $addFields: { imageCount: { $cond: { if: { $isArray: "$images" }, then: { $size: "$images" }, else: 0 } } } },
+        // Exclude heavy images field before sort to stay under 32MB memory limit
+        { $project: { images: 0, __v: 0 } },
+        { $sort: sortOption },
+        { $skip: skip },
+        { $limit: limit },
+      ]),
       Product.countDocuments(filter),
     ]);
 
@@ -47,6 +58,60 @@ router.get("/", async (c) => {
   } catch (err) {
     console.error("Get products error:", err);
     return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// ─── Image Proxy ──────────────────────────────────────────────────────────────
+// Serves individual product images. Accepts base64 data URLs from MongoDB,
+// external URLs (picsum.photos), and /uploads/ paths.
+// This keeps the products list API response small (no multi-MB data URLs).
+router.get("/image/:productId/:index", async (c) => {
+  try {
+    const { productId, index } = c.req.param();
+    const idx = parseInt(index);
+    const product = await Product.findById(productId).select("images").lean();
+    if (!product || !product.images || !product.images[idx]) {
+      return c.json({ error: "Image not found" }, 404);
+    }
+
+    const url = product.images[idx];
+
+    // Data URL — decode and serve binary
+    if (url.startsWith("data:")) {
+      const [header, base64] = url.split(",");
+      const mime = header.split(":")[1].split(";")[0];
+      const binary = Buffer.from(base64, "base64");
+      return new Response(binary, {
+        headers: {
+          "Content-Type": mime,
+          "Cache-Control": "public, max-age=604800, immutable",
+          "Content-Length": binary.length.toString(),
+        },
+      });
+    }
+
+    // External URL (picsum.photos etc.) — redirect
+    if (url.startsWith("http")) {
+      return c.redirect(url, 302);
+    }
+
+    // /uploads/ path — serve from disk
+    if (url.startsWith("/uploads/")) {
+      const filename = url.replace("/uploads/", "");
+      const filePath = `./uploads/${filename}`;
+      const file = Bun.file(filePath);
+      const exists = await file.exists();
+      if (!exists) return c.json({ error: "File not found" }, 404);
+      return new Response(file, {
+        headers: { "Cache-Control": "public, max-age=604800, immutable" },
+      });
+    }
+
+    // Unknown URL format — try redirect anyway
+    return c.redirect(url, 302);
+  } catch (err) {
+    console.error("Image proxy error:", err);
+    return c.json({ error: "Image not found" }, 404);
   }
 });
 
@@ -80,7 +145,7 @@ router.get("/:category/:brand/:model", async (c) => {
       category: category.toLowerCase(),
       brand: brand.toLowerCase(),
       model: model.toLowerCase(),
-    });
+    }).lean();
 
     if (!product) {
       return c.json({ error: "Product not found" }, 404);

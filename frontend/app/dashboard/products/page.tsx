@@ -24,7 +24,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useAuth } from "@/store/auth";
-import { api, type Product } from "@/lib/api";
+import { api, getProductImageUrl, type Product } from "@/lib/api";
 import { useToast } from "@/store/toast";
 import PriceDisplay from "@/components/PriceDisplay";
 
@@ -133,7 +133,12 @@ export default function ProductsPage() {
     ? form.images.split("\n").map((s) => s.trim()).filter(Boolean)
     : [];
 
-  const getImageUrl = (url: string) => url.startsWith("/uploads/") ? "http://localhost:4000" + url : url;
+  const getImageUrl = (url: string) => {
+    if (!url) return "/placeholder.svg";
+    if (url.startsWith("data:")) return url;
+    if (url.startsWith("/uploads/")) return "http://localhost:4000" + url;
+    return url;
+  };
 
   const handleImageUpload = async (file: File) => {
     if (!file.type.match(/^image\/(jpeg|png|webp)$/)) {
@@ -159,7 +164,7 @@ export default function ProductsPage() {
         throw new Error(err.error || "Upload failed");
       }
       const data = await res.json();
-      const fullUrl = "http://localhost:4000" + data.url;
+      const fullUrl = data.url;
       const current = form.images
         ? form.images.split("\n").map((s) => s.trim()).filter(Boolean)
         : [];
@@ -493,9 +498,9 @@ export default function ProductsPage() {
                               className="flex items-center gap-3 cursor-pointer group"
                             >
                               <div className="w-12 h-12 rounded-xl bg-[var(--bg-tertiary)] overflow-hidden shrink-0 ring-1 ring-[var(--border)] shadow-sm">
-                                {product.images?.[0] ? (
+                                {product.imageCount && product.imageCount > 0 ? (
                                   <img
-                                    src={product.images[0]}
+                                    src={getProductImageUrl(product)}
                                     alt={product.title}
                                     className="w-full h-full object-cover"
                                   />
@@ -587,9 +592,9 @@ export default function ProductsPage() {
                       >
                         {/* Product image */}
                         <div className="w-16 h-16 rounded-xl bg-[var(--bg-tertiary)] overflow-hidden shrink-0 ring-1 ring-[var(--border)] shadow-sm">
-                          {product.images?.[0] ? (
+                          {product.imageCount && product.imageCount > 0 ? (
                             <img
-                              src={product.images[0]}
+                              src={getProductImageUrl(product)}
                               alt={product.title}
                               className="w-full h-full object-cover"
                             />
@@ -759,8 +764,8 @@ export default function ProductsPage() {
                 {/* Product preview */}
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-tertiary)] mb-4">
                   <div className="w-10 h-10 rounded-lg overflow-hidden ring-1 ring-[var(--border)] shrink-0">
-                    {deleteTarget.images?.[0] ? (
-                      <img src={deleteTarget.images[0]} alt="" className="w-full h-full object-cover" />
+                    {deleteTarget.imageCount && deleteTarget.imageCount > 0 ? (
+                      <img src={getProductImageUrl(deleteTarget)} alt="" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-[var(--bg-tertiary)]">
                         <ImageIcon size={14} className="text-[var(--text-tertiary)]" />

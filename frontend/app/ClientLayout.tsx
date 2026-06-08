@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, memo } from "react";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
@@ -13,9 +13,15 @@ import { I18nProvider, useI18n } from "@/lib/i18n-context";
 
 const authPages = ["/login", "/signup"];
 
-function LayoutInner({ children, pathname }: { children: React.ReactNode; pathname: string }) {
-  const { locale } = useI18n();
+// Memoized to prevent re-render on every pathname change — only the <motion.main>
+// key changes, not the entire tree.
+const LayoutInner = memo(function LayoutInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { isDark } = useTheme();
+  const pathname = usePathname();
   const isAuthPage = authPages.includes(pathname);
   const isDashboardPage = pathname.startsWith("/dashboard");
 
@@ -28,10 +34,10 @@ function LayoutInner({ children, pathname }: { children: React.ReactNode; pathna
       <AnimatePresence mode="popLayout">
         <motion.main
           key={pathname}
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.15, ease: "easeOut" }}
           className="min-h-[calc(100vh-4rem)]"
         >
           {children}
@@ -40,21 +46,26 @@ function LayoutInner({ children, pathname }: { children: React.ReactNode; pathna
       <Footer />
     </>
   );
-}
+});
+
+let authChecked = false;
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const { checkAuth } = useAuth();
   const { fetch: fetchSite } = useSite();
-  const pathname = usePathname();
 
   useEffect(() => {
-    checkAuth();
-    fetchSite();
+    // Only check auth once — avoids unnecessary API calls on re-renders
+    if (!authChecked) {
+      authChecked = true;
+      checkAuth();
+      fetchSite();
+    }
   }, [checkAuth, fetchSite]);
 
   return (
     <I18nProvider>
-      <LayoutInner pathname={pathname}>{children}</LayoutInner>
+      <LayoutInner>{children}</LayoutInner>
       <ToastContainer />
     </I18nProvider>
   );

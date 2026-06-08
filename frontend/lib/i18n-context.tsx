@@ -34,7 +34,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     mountedRef.current = true;
 
     async function load() {
-      clearTranslationCache();
+      // fetchTranslations has its own internal cache keyed by locale,
+      // so calling it repeatedly is cheap after the first load
       const data = await fetchTranslations(locale);
       if (mountedRef.current) {
         setTranslations(data);

@@ -3,6 +3,38 @@ const API_BASE = "/api";
 // Direct backend URL for serving uploaded files (not proxied by Next.js)
 export const BACKEND_URL = "http://localhost:4000";
 
+// ─── In-memory API cache with TTL ────────────────────────────────────────────
+// This is the KEY fix for slow navigation: caching GET responses so navigating
+// back to a previously visited page is instant instead of re-fetching.
+const cache = new Map<string, { data: unknown; timestamp: number }>();
+const CACHE_TTL_MS = 60_000; // 60 seconds
+
+function getCacheKey(endpoint: string, options?: RequestInit): string {
+  // Only cache GET requests
+  if (options?.method && options.method !== "GET") return "";
+  return endpoint;
+}
+
+function getFromCache<T>(key: string): T | null {
+  if (!key) return null;
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data as T;
+}
+
+function setCache(key: string, data: unknown): void {
+  if (!key) return;
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+function invalidateCache(): void {
+  cache.clear();
+}
+
 export interface User {
   id: string;
   name: string;
@@ -31,7 +63,10 @@ export interface Product {
   category: string;
   brand: string;
   model: string;
-  images: string[];
+  /** Full images array — only present in detail API response (otherwise undefined) */
+  images?: string[];
+  /** Number of images available (always present in list response) */
+  imageCount?: number;
   stock: number;
   featured?: boolean;
   featuredOrder?: number;
@@ -42,6 +77,14 @@ export interface Product {
 
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const cacheKey = getCacheKey(endpoint, options);
+
+  // ✅ Return cached data immediately if available (zero delay navigation)
+  if (cacheKey) {
+    const cached = getFromCache<T>(cacheKey);
+    if (cached) return cached;
+  }
+
   const res = await fetch(`${API_BASE}${endpoint}`, {
     credentials: "include",
     headers: { "Content-Type": "application/json", ...options?.headers },
@@ -56,7 +99,20 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     throw new Error(err.error || `Request failed (${res.status})`);
   }
 
-  return res.json();
+  const data = await res.json();
+
+  // 💾 Cache the response for GET requests
+  if (cacheKey) {
+    setCache(cacheKey, data);
+  }
+
+  // 🧹 Invalidate cache on mutations that could affect products or listings
+  const method = options?.method || "GET";
+  if (method !== "GET" && (endpoint.startsWith("/products") || endpoint.startsWith("/admin") || endpoint.startsWith("/settings"))) {
+    invalidateCache();
+  }
+
+  return data;
 }
 
 export interface Order {
@@ -231,8 +287,31 @@ export interface AdminListResponse<T> {
   pagination: { total: number; page: number; limit: number; totalPages: number };
 }
 
-export function getProductImageUrl(url: string): string {
+/**
+ * Resolves a product image URL to a usable src value.
+ *
+ * For list responses (no `images` array), constructs a proxy URL so the browser
+ * fetches the image from the backend image endpoint instead of receiving
+ * multi-MB base64 data URLs in every API response.
+ *
+ * For detail responses (has `images` array), returns the data URL directly.
+ */
+export function getProductImageUrl(srcOrProduct: string | Product, index: number = 0): string {
+  // If given a product object, resolve via proxy or inline data URL
+  if (typeof srcOrProduct === "object" && srcOrProduct !== null) {
+    const product = srcOrProduct;
+    // Detail page response includes full images — use directly
+    if (product.images && product.images.length > index) {
+      return product.images[index];
+    }
+    // List response — construct proxy URL
+    return `/api/products/image/${product._id}/${index}`;
+  }
+
+  // Legacy string-based resolution
+  const url = srcOrProduct || "";
   if (!url) return "/placeholder.svg";
+  if (url.startsWith("data:")) return url;
   if (url.startsWith("/uploads/")) return `${BACKEND_URL}${url}`;
   return url;
 }

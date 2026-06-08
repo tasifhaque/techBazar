@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { mkdirSync } from "node:fs";
 import { Product, User, Order } from "../models";
 import { createProductSchema } from "../validators/product";
 import { authMiddleware, type Variables } from "../middleware/auth";
@@ -101,6 +100,8 @@ router.get("/categories", async (c) => {
 });
 
 // ─── File Upload ────────────────────────────────────────────────────────────
+// Images are stored as base64 data URLs directly in MongoDB.
+// No filesystem writes.
 
 router.post("/upload", async (c) => {
   const denied = requireAdmin(c);
@@ -128,17 +129,114 @@ router.post("/upload", async (c) => {
       return c.json({ error: "File size must be under 10MB" }, 400);
     }
 
-    const ext = file.name.split(".").pop() || "jpg";
-    const filename = `${crypto.randomUUID()}.${ext}`;
-    const uploadDir = `${process.cwd()}/uploads`;
+    // Convert file to base64 data URL and store in MongoDB
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString("base64");
+    const dataUrl = `data:${file.type};base64,${base64}`;
 
-    mkdirSync(uploadDir, { recursive: true });
-    await Bun.write(`${uploadDir}/${filename}`, file);
-
-    return c.json({ url: `/uploads/${filename}` });
+    return c.json({ url: dataUrl });
   } catch (err) {
     console.error("Upload error:", err);
     return c.json({ error: "Upload failed" }, 500);
+  }
+});
+
+// ─── Image Migration ────────────────────────────────────────────────────────
+// Batch-migrates old filesystem-based image URLs (/uploads/*, http://localhost:4000/uploads/*)
+// to base64 data URLs stored directly in MongoDB documents.
+
+router.post("/migrate-images", async (c) => {
+  const denied = requireAdmin(c);
+  if (denied) return denied;
+
+  try {
+    // Find all products that still reference old-style filesystem URLs
+    const products = await Product.find({
+      $or: [
+        { images: { $regex: "^/uploads/" } },
+        { images: { $regex: "/uploads/" } },
+      ],
+    });
+
+    let migrated = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const product of products) {
+      let changed = false;
+      const newImages: string[] = [];
+
+      for (const url of product.images) {
+        // Already a data URL — keep as-is
+        if (url.startsWith("data:")) {
+          newImages.push(url);
+          continue;
+        }
+
+        // Extract filename from old URL patterns
+        let filename = "";
+        if (url.startsWith("/uploads/")) {
+          filename = url.replace("/uploads/", "");
+        } else if (url.includes("/uploads/")) {
+          const parts = url.split("/uploads/");
+          filename = parts[parts.length - 1];
+        }
+
+        if (!filename) {
+          newImages.push(url);
+          continue;
+        }
+
+        // Try to read the file from disk and convert to data URL
+        const filePath = `./uploads/${filename}`;
+        try {
+          const file = Bun.file(filePath);
+          const exists = await file.exists();
+          if (exists) {
+            const arrayBuffer = await file.arrayBuffer();
+            const ext = (filename.split(".").pop() || "jpg").toLowerCase();
+            const mimeTypes: Record<string, string> = {
+              jpg: "image/jpeg",
+              jpeg: "image/jpeg",
+              png: "image/png",
+              webp: "image/webp",
+              gif: "image/gif",
+            };
+            const mime = mimeTypes[ext] || "image/jpeg";
+            const base64 = Buffer.from(arrayBuffer).toString("base64");
+            newImages.push(`data:${mime};base64,${base64}`);
+            changed = true;
+          } else {
+            // File doesn't exist on disk — push a placeholder
+            console.warn(`Migration: file not found on disk: ${filePath}`);
+            newImages.push(url);
+            failed++;
+          }
+        } catch (err) {
+          console.error(`Migration: error reading ${filePath}:`, err);
+          newImages.push(url);
+          failed++;
+          errors.push(`${product._id}: ${url} — ${err instanceof Error ? err.message : String(err)}`);
+        }
+      }
+
+      if (changed) {
+        product.images = newImages;
+        await product.save();
+        migrated++;
+      }
+    }
+
+    return c.json({
+      message: `Migration complete. ${migrated} products updated, ${failed} images failed.`,
+      totalScanned: products.length,
+      migrated,
+      failed,
+      errors: errors.length > 0 ? errors : undefined,
+    });
+  } catch (err) {
+    console.error("Migration error:", err);
+    return c.json({ error: "Migration failed" }, 500);
   }
 });
 

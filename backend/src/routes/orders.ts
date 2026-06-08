@@ -36,17 +36,28 @@ router.post("/", authMiddleware, async (c) => {
     const products = await Product.find({ _id: { $in: productIds } });
     const productMap = new Map(products.map((p) => [p._id.toString(), p]));
 
+    const host = c.req.header("host") || "localhost:4000";
+    const proto = c.req.header("x-forwarded-proto") || "http";
+    const origin = `${proto}://${host}`;
+
     const orderItems = items.map((item) => {
       const product = productMap.get(item.productId);
       if (!product) throw new Error(`Product ${item.productId} not found`);
       if (product.stock < item.quantity) throw new Error(`Insufficient stock for ${product.title}`);
+      const rawImage = product.images?.[0] || "";
+      // Data URLs are self-contained; legacy /uploads/ paths need origin prefix
+      const image = rawImage.startsWith("data:")
+        ? rawImage
+        : rawImage.startsWith("/")
+          ? `${origin}${rawImage}`
+          : rawImage;
       return {
         productId: product._id,
         title: product.title,
         price: product.price,
         discountPercentage: product.discountPercentage,
         quantity: item.quantity,
-        image: product.images?.[0] || "",
+        image,
       };
     });
 
@@ -79,12 +90,38 @@ router.post("/", authMiddleware, async (c) => {
   }
 });
 
+function resolveOrderImageUrl(url: string, origin: string): string {
+  if (!url) return url;
+  if (url.startsWith("/")) {
+    return `${origin}${url}`;
+  }
+  return url;
+}
+
+function resolveOrderItemImages(order: any, origin: string): void {
+  if (order.items && Array.isArray(order.items)) {
+    for (const item of order.items) {
+      if (item.image) {
+        item.image = resolveOrderImageUrl(item.image, origin);
+      }
+    }
+  }
+}
+
+function resolveOrders(c: any, orders: any[]): void {
+  const host = c.req.header("host") || "localhost:4000";
+  const proto = c.req.header("x-forwarded-proto") || "http";
+  const origin = `${proto}://${host}`;
+  orders.forEach((order) => resolveOrderItemImages(order, origin));
+}
+
 router.get("/", authMiddleware, async (c) => {
   try {
     const { userId } = c.get("user");
     const orders = await Order.find({ user: userId })
       .sort({ createdAt: -1 })
       .populate("user", "name email");
+    resolveOrders(c, orders);
     return c.json({ orders });
   } catch (err) {
     console.error("Get orders error:", err);
@@ -101,6 +138,7 @@ router.get("/:id", authMiddleware, async (c) => {
     if (role !== "admin" && order.user.toString() !== userId) {
       return c.json({ error: "Unauthorized" }, 403);
     }
+    resolveOrders(c, [order]);
     return c.json({ order });
   } catch (err) {
     console.error("Get order error:", err);

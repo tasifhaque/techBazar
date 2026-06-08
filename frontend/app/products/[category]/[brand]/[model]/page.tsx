@@ -14,6 +14,7 @@ import { useCart } from "@/store/cart";
 import { useQuickBuy } from "@/store/quickBuy";
 import { useToast } from "@/store/toast";
 import PriceDisplay from "@/components/PriceDisplay";
+import ProductImage from "@/components/ProductImage";
 import { useAuth } from "@/store/auth";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
@@ -186,7 +187,7 @@ export default function ProductDetailPage() {
   }
 
   const discountedPrice = product.price * (1 - product.discountPercentage / 100);
-  const images = product.images.length > 0 ? product.images : [];
+  const images = (product.images && product.images.length > 0) ? product.images : [];
   const specDefs = categorySpecs[product.category] || [];
   const availableSpecs = specDefs.filter((s) => product.specifications?.[s.key]);
   const allSpecs = Object.entries(product.specifications || {});
@@ -220,15 +221,15 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             <div className="relative aspect-square bg-[var(--bg-tertiary)] overflow-hidden border border-[var(--border)]">
               {images[imageIndex] ? (
-                <motion.img
-                  key={imageIndex}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  src={images[imageIndex]}
-                  alt={product.title}
-                  className="w-full h-full object-cover"
-                />
+                    <ProductImage
+                      src={images[imageIndex]}
+                      alt={product.title}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      priority={imageIndex === 0}
+                      loading={imageIndex === 0 ? "eager" : "lazy"}
+                      className="object-cover"
+                    />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-[var(--text-tertiary)] text-xs">No image</div>
               )}
@@ -258,7 +259,7 @@ export default function ProductDetailPage() {
                       i === imageIndex ? "border-[var(--accent)]" : "border-[var(--border)] hover:border-[var(--border-hover)]"
                     }`}
                   >
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                    <ProductImage src={img} alt="" fill className="object-cover" sizes="64px" />
                   </button>
                 ))}
               </div>

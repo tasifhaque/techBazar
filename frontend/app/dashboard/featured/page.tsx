@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { Crown, Search, Star, ArrowUp, ArrowDown, Package, Loader2 } from "lucide-react";
 import { useAuth } from "@/store/auth";
-import { api, type Product } from "@/lib/api";
+import { api, getProductImageUrl, type Product } from "@/lib/api";
 import { useToast } from "@/store/toast";
 
 export default function FeaturedPage() {
@@ -189,9 +189,9 @@ export default function FeaturedPage() {
                         </button>
                       </div>
                       <div className="aspect-square overflow-hidden">
-                        {product.images?.[0] ? (
+                        {product.imageCount && product.imageCount > 0 ? (
                           <img
-                            src={product.images[0]}
+                            src={getProductImageUrl(product)}
                             alt={product.title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
@@ -231,9 +231,9 @@ export default function FeaturedPage() {
                       className="group relative bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] overflow-hidden hover:border-[var(--accent)]/30 transition-all duration-300"
                     >
                       <div className="aspect-square overflow-hidden">
-                        {product.images?.[0] ? (
+                        {product.imageCount && product.imageCount > 0 ? (
                           <img
-                            src={product.images[0]}
+                            src={getProductImageUrl(product)}
                             alt={product.title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />

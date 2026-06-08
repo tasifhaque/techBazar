@@ -1,15 +1,16 @@
 "use client";
 
+import { memo, useState } from "react";
 import { motion } from "framer-motion";
 import { ShoppingCart, Zap, Package } from "lucide-react";
-import { type Product } from "@/lib/api";
+import { type Product, getProductImageUrl } from "@/lib/api";
 import { useCart } from "@/store/cart";
 import { useQuickBuy } from "@/store/quickBuy";
 import { useAuth } from "@/store/auth";
 import { useToast } from "@/store/toast";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import PriceDisplay from "@/components/PriceDisplay";
+import ProductImage from "@/components/ProductImage";
 import { useI18n } from "@/lib/i18n-context";
 
 interface Props {
@@ -17,7 +18,7 @@ interface Props {
   index?: number;
 }
 
-export default function ProductCard({ product, index = 0 }: Props) {
+function ProductCardInner({ product, index = 0 }: Props) {
   const { t } = useI18n();
   const addItem = useCart((s) => s.addItem);
   const setQuickBuyItem = useQuickBuy((s) => s.setItem);
@@ -29,7 +30,7 @@ export default function ProductCard({ product, index = 0 }: Props) {
   const [imgLoaded, setImgLoaded] = useState(false);
 
   const discountedPrice = product.price * (1 - (product.discountPercentage || 0) / 100);
-  const image = product.images?.[0] || null;
+  const image = getProductImageUrl(product);
 
   const handleAuthGuard = (action: "cart" | "buy"): boolean => {
     if (authLoading) return true;
@@ -82,13 +83,14 @@ export default function ProductCard({ product, index = 0 }: Props) {
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-black/5 z-[1] pointer-events-none" />
         {image ? (
           <>
-            <img
-              src={image}
+            <ProductImage
+              src={image || ""}
               alt={product.title}
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+              loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className={`w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${
-                imgLoaded ? "opacity-100" : "opacity-0"
-              }`}
+              className="object-cover transition-all duration-700 group-hover:scale-105"
             />
             {/* Subtle gradient at bottom of image */}
             <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-[var(--bg-card)] via-[var(--bg-card)]/40 to-transparent z-[2]" />
@@ -195,3 +197,6 @@ export default function ProductCard({ product, index = 0 }: Props) {
     </motion.div>
   );
 }
+
+const ProductCard = memo(ProductCardInner);
+export default ProductCard;
