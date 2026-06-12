@@ -1,10 +1,8 @@
 import { Hono } from "hono";
-import en from "../translations/en.json";
-import bn from "../translations/bn.json";
+import en from "../translations/en.json" with { type: "json" };
+import bn from "../translations/bn.json" with { type: "json" };
 
 const router = new Hono();
-
-const translations: Record<string, any> = { en, bn };
 
 router.get("/:lang", (c) => {
   const { lang } = c.req.param();
@@ -13,10 +11,8 @@ router.get("/:lang", (c) => {
     return c.json({ error: "Unsupported language. Supported: en, bn" }, 400);
   }
 
-  return c.json({
-    locale: lang,
-    translations: translations[lang],
-  });
+  const data = lang === "en" ? en : bn;
+  return c.json({ locale: lang, translations: data });
 });
 
 export default router;
