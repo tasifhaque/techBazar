@@ -65,6 +65,61 @@ export function ProfileSkeleton() {
   );
 }
 
+export function HeroCarouselSkeleton() {
+  return (
+    <div className="relative h-[80vh] min-h-[420px] sm:min-h-[500px] lg:min-h-[600px] max-h-[1000px] overflow-hidden bg-[var(--bg-secondary)]">
+      {/* Simulated editorial layout skeleton */}
+      <div className="absolute inset-0" />
+      <div className="relative z-10 w-full h-full flex items-end">
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-10 lg:px-16 pb-12 sm:pb-16 md:pb-24">
+          <div className="max-w-2xl space-y-4 sm:space-y-5">
+            {/* Category / brand line */}
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="h-2.5 w-16 bg-white/10 rounded" />
+              <div className="w-6 h-px bg-white/10" />
+              <div className="h-2.5 w-12 bg-white/10 rounded" />
+            </div>
+            {/* Title */}
+            <div className="space-y-2">
+              <div className="h-10 sm:h-14 md:h-16 lg:h-20 w-3/4 bg-white/8 rounded" />
+              <div className="h-10 sm:h-14 md:h-16 lg:h-20 w-1/2 bg-white/6 rounded" />
+            </div>
+            {/* Decorative line */}
+            <div className="w-12 sm:w-16 h-[1.5px] bg-white/10" />
+            {/* Description */}
+            <div className="space-y-2 max-w-lg">
+              <div className="h-3.5 w-full bg-white/6 rounded" />
+              <div className="h-3.5 w-2/3 bg-white/5 rounded" />
+            </div>
+            {/* Price and buttons */}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-6 pt-2">
+              <div className="h-8 w-28 bg-white/10 rounded" />
+              <div className="flex gap-2.5">
+                <div className="h-10 w-28 bg-white/8 rounded" />
+                <div className="h-10 w-24 bg-white/8 rounded" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Shimmer sweep */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent"
+          animate={{ x: ['-100%', '400%'] }}
+          transition={{ duration: 3, repeat: Infinity, ease: 'linear', repeatDelay: 1.5 }}
+        />
+      </div>
+      {/* Navigation dots */}
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-3 z-20">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className={`h-[2px] rounded ${i === 0 ? 'w-10 bg-white/10' : 'w-2 bg-white/20'}`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ProductDetailSkeleton() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
