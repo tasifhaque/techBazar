@@ -5,10 +5,7 @@ import { fileURLToPath } from "url";
 
 const router = new Hono();
 
-const __dirname = typeof import.meta !== "undefined"
-  ? (import.meta.dirname ?? dirname(fileURLToPath(import.meta.url)))
-  : process.cwd();
-const translationsDir = join(__dirname, "..", "translations");
+const translationsDir = join(process.cwd(), "translations");
 
 router.get("/:lang", async (c) => {
   const { lang } = c.req.param();
