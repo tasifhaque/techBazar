@@ -34,12 +34,18 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     mountedRef.current = true;
 
     async function load() {
-      // fetchTranslations has its own internal cache keyed by locale,
-      // so calling it repeatedly is cheap after the first load
-      const data = await fetchTranslations(locale);
-      if (mountedRef.current) {
-        setTranslations(data);
-        setIsLoaded(true);
+      try {
+        const data = await fetchTranslations(locale);
+        if (mountedRef.current) {
+          setTranslations(data);
+          setIsLoaded(true);
+        }
+      } catch (err) {
+        console.error("[I18nProvider] Unexpected error loading translations:", err);
+        // Even on error, mark as loaded so the UI renders with fallback keys
+        if (mountedRef.current) {
+          setIsLoaded(true);
+        }
       }
     }
 
@@ -49,6 +55,19 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       mountedRef.current = false;
     };
   }, [locale]);
+
+  // Safety net: if translations haven't loaded after 8 seconds, force isLoaded
+  // so the UI doesn't stay stuck showing raw keys forever.
+  useEffect(() => {
+    if (isLoaded) return;
+    const timer = setTimeout(() => {
+      if (!isLoaded && mountedRef.current) {
+        console.warn("[I18nProvider] Safety timeout — forcing isLoaded=true");
+        setIsLoaded(true);
+      }
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, [isLoaded]);
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
@@ -70,6 +89,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const switchLocale = useCallback(
     async (newLocale: Locale) => {
       if (newLocale === locale) return;
+      clearTranslationCache();
       setLocale(newLocale);
     },
     [locale, setLocale]

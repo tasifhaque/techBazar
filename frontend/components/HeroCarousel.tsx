@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import PriceDisplay from "@/components/PriceDisplay";
 import ProductImage from "@/components/ProductImage";
 import { useI18n } from "@/lib/i18n-context";
+import { HeroCarouselSkeleton } from "@/components/SkeletonLoader";
 
 interface Props {
   products: Product[];
