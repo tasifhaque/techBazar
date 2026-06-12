@@ -3,8 +3,12 @@ import path from "path";
 import { readFile } from "fs/promises";
 import { fileURLToPath } from "url";
 
-const __dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
-config({ path: path.resolve(__dirname, "..", "..", ".env") });
+const __dirname = typeof import.meta !== "undefined"
+  ? (import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url)))
+  : process.cwd();
+if (!process.env.VERCEL) {
+  config({ path: path.resolve(__dirname, "..", "..", ".env") });
+}
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";

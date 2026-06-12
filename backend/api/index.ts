@@ -3,14 +3,27 @@ import { connectDB } from "../src/config/db";
 
 let connected = false;
 
-export default async function handler(req: Request) {
+async function ensureDB() {
   if (!connected) {
     try {
       await connectDB();
-    } catch {
-      // DB not available, API will still respond with errors
+    } catch (err) {
+      console.error("DB connection failed:", err);
     }
     connected = true;
   }
-  return app.fetch(req);
+}
+
+export default async function handler(req: Request) {
+  try {
+    await ensureDB();
+    const res = await app.fetch(req);
+    return res;
+  } catch (err) {
+    console.error("Unhandled error:", err);
+    return new Response(
+      JSON.stringify({ error: "Internal Server Error" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 }
