@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 const __dirname = typeof import.meta !== "undefined"
   ? (import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url)))
   : process.cwd();
-if (!process.env.VERCEL) {
+if (process.env.VERCEL !== "1" && process.env.NETLIFY !== "1") {
   config({ path: path.resolve(__dirname, "..", "..", ".env") });
 }
 
@@ -34,6 +34,20 @@ app.use(
     credentials: true,
   })
 );
+
+let dbConnected = false;
+
+app.use("*", async (c, next) => {
+  if (!dbConnected) {
+    try {
+      await connectDB();
+    } catch (err) {
+      console.warn("MongoDB connection failed:", err);
+    }
+    dbConnected = true;
+  }
+  await next();
+});
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
@@ -83,6 +97,6 @@ async function main() {
 
 export default app;
 
-if (process.env.VERCEL !== "1") {
+if (process.env.VERCEL !== "1" && process.env.NETLIFY !== "1") {
   main();
 }

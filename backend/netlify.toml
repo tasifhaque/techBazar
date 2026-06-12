@@ -1,0 +1,4 @@
+[build]
+  package = "bun"
+  command = "bun run build"
+  functions = "netlify/functions"
