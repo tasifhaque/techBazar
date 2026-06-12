@@ -59,7 +59,7 @@ router.put("/", authMiddleware, async (c) => {
     const body = await c.req.json();
     const parsed = updateSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     let settings = await Setting.findOne();

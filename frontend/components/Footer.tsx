@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowUp, Mail, Phone, MapPin, Instagram, Twitter, Youtube } from "lucide-react";
+import { ArrowUp, Mail, Phone, MapPin, Camera, MessageCircle, Play } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n-context";
@@ -39,13 +39,13 @@ export default function Footer() {
             </p>
             <div className="flex items-center justify-center md:justify-start gap-3 pt-2">
               <a href="#" className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center border border-gray-700 rounded-sm hover:border-[var(--accent)] hover:text-[var(--accent)] text-gray-500 transition-all duration-300">
-                <Instagram size={16} className="sm:size-[14px]" />
+                <Camera size={16} className="sm:size-[14px]" />
               </a>
               <a href="#" className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center border border-gray-700 rounded-sm hover:border-[var(--accent)] hover:text-[var(--accent)] text-gray-500 transition-all duration-300">
-                <Twitter size={16} className="sm:size-[14px]" />
+                <MessageCircle size={16} className="sm:size-[14px]" />
               </a>
               <a href="#" className="w-10 h-10 sm:w-8 sm:h-8 flex items-center justify-center border border-gray-700 rounded-sm hover:border-[var(--accent)] hover:text-[var(--accent)] text-gray-500 transition-all duration-300">
-                <Youtube size={16} className="sm:size-[14px]" />
+                <Play size={16} className="sm:size-[14px]" />
               </a>
             </div>
           </div>

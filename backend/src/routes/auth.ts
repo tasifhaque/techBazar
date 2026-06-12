@@ -84,7 +84,7 @@ router.post("/signup", async (c) => {
     const body = await c.req.json();
     const parsed = signupSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     const { name, email, password, gender } = parsed.data;
@@ -219,7 +219,7 @@ router.post("/verify-email", async (c) => {
       name: payload.name,
       email: payload.email,
       password: payload.password,
-      gender: payload.gender,
+      gender: payload.gender as "male" | "female",
       avatarUrl: payload.avatarUrl,
       emailVerified: true,
       verificationCode: "",
@@ -432,7 +432,7 @@ router.post("/login", async (c) => {
     const body = await c.req.json();
     const parsed = loginSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     const { email, password } = parsed.data;
@@ -519,7 +519,7 @@ router.put("/profile", authMiddleware, async (c) => {
     const body = await c.req.json();
     const parsed = updateProfileSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     const update: Record<string, string> = {};
@@ -589,7 +589,7 @@ router.put("/password", authMiddleware, async (c) => {
     const body = await c.req.json();
     const parsed = changePasswordSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     const { currentPassword, newPassword } = parsed.data;

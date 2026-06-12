@@ -243,7 +243,7 @@ router.post("/products", async (c) => {
     const body = await c.req.json();
     const parsed = createProductSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message, details: parsed.error.errors }, 400);
+      return c.json({ error: parsed.error.issues[0].message, details: parsed.error.issues }, 400);
     }
 
     const existing = await Product.findOne({
@@ -259,7 +259,7 @@ router.post("/products", async (c) => {
       return c.json({ product: existing, message: "Stock increased for existing product" }, 200);
     }
 
-    const product = await Product.create(parsed.data);
+    const product = await Product.create(parsed.data as any);
     return c.json({ product }, 201);
   } catch (err) {
     console.error("Create product error:", err);
@@ -295,7 +295,7 @@ const updateProductSchema = z.object({
   stock: z.number().int().nonnegative().optional(),
   featured: z.boolean().optional(),
   featuredOrder: z.number().int().optional(),
-  specifications: z.record(z.string()).optional(),
+  specifications: z.record(z.string(), z.string()).optional().default({}),
 });
 
 // ─── User Management ────────────────────────────────────────────────────────
@@ -478,7 +478,7 @@ router.put("/products/:id", async (c) => {
     const body = await c.req.json();
     const parsed = updateProductSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message, details: parsed.error.errors }, 400);
+      return c.json({ error: parsed.error.issues[0].message, details: parsed.error.issues }, 400);
     }
 
     const product = await Product.findById(id);
@@ -567,7 +567,7 @@ router.put("/profile", async (c) => {
     const body = await c.req.json();
     const parsed = updateAdminProfileSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     // Check email uniqueness if email is being changed
@@ -620,7 +620,7 @@ router.put("/password", async (c) => {
     const body = await c.req.json();
     const parsed = changeAdminPasswordSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     const { currentPassword, newPassword } = parsed.data;
@@ -657,7 +657,7 @@ router.delete("/account", async (c) => {
     const body = await c.req.json();
     const parsed = deleteAccountSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     const user = await User.findById(userId);

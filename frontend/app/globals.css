@@ -1,6 +1,29 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--bg-primary);
+  --color-secondary: var(--bg-secondary);
+  --color-tertiary: var(--bg-tertiary);
+  --color-foreground: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-subtle: var(--text-tertiary);
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-light: var(--accent-light);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, serif;
+
+  --tracking-lux: 0.05em;
+}
 
 :root {
   --bg-primary: #faf8f5;
@@ -76,14 +99,10 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--text-tertiary); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
-@layer base {
-  input, select, textarea {
-    @apply border;
-    border-color: var(--border);
-  }
+input, select, textarea {
+  border-color: var(--border);
 }
 
-/* ─── Image loading skeleton ─── */
 @keyframes img-shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -94,41 +113,40 @@ body {
   animation: img-shimmer 1.5s ease-in-out infinite;
 }
 
-@layer utilities {
-  .card-hover {
-    @apply transition-all duration-500;
-  }
-  .card-hover:hover {
-    transform: translateY(-4px);
-    border-color: var(--accent);
-    box-shadow: 0 8px 32px rgba(201, 168, 76, 0.08);
-  }
-  .btn-gradient {
-    background: var(--accent-gradient);
-    color: white;
-    @apply font-semibold transition-all duration-300;
-  }
-  .btn-gradient:hover {
-    background: var(--accent-gradient-hover);
-    box-shadow: 0 4px 20px rgba(201, 168, 76, 0.3);
-    transform: translateY(-1px);
-  }
-  .btn-gradient:active {
-    transform: translateY(0);
-  }
-  .gold-shimmer {
-    background: linear-gradient(90deg, var(--accent-light) 25%, var(--accent) 50%, var(--accent-light) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
-  }
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
-  .gold-border-bottom {
-    border-bottom: 1px solid var(--accent);
-  }
-  .text-gold {
-    color: var(--accent);
-  }
+.card-hover {
+  transition: all 0.5s;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 32px rgba(201, 168, 76, 0.08);
+}
+.btn-gradient {
+  background: var(--accent-gradient);
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+.btn-gradient:hover {
+  background: var(--accent-gradient-hover);
+  box-shadow: 0 4px 20px rgba(201, 168, 76, 0.3);
+  transform: translateY(-1px);
+}
+.btn-gradient:active {
+  transform: translateY(0);
+}
+.gold-shimmer {
+  background: linear-gradient(90deg, var(--accent-light) 25%, var(--accent) 50%, var(--accent-light) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.gold-border-bottom {
+  border-bottom: 1px solid var(--accent);
+}
+.text-gold {
+  color: var(--accent);
 }

@@ -10,24 +10,24 @@
     "seed": "bun --env-file=../.env run src/seed.ts"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.8",
+    "@hono/node-server": "^1.14.0",
     "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
-    "dotenv": "^16.4.7",
-    "hono": "^4.6.20",
+    "dotenv": "^16.5.0",
+    "hono": "^4.12.25",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.9.5",
+    "mongoose": "^9.7.0",
     "nodemailer": "^8.0.8",
     "resend": "^6.12.4",
-    "zod": "^3.24.1"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cookie-parser": "^1.4.8",
     "@types/jsonwebtoken": "^9.0.7",
-    "@types/node": "^22.12.0",
+    "@types/node": "^22.15.0",
     "@types/nodemailer": "^8.0.0",
-    "typescript": "^5.7.3"
+    "typescript": "^6.0.3"
   }
 }

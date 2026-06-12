@@ -59,7 +59,7 @@ const heroTitleVariant = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] },
+    transition: { duration: 0.8, ease: [0.25, 0.1, 0.25, 1] as const },
   },
 };
 
@@ -315,7 +315,7 @@ export default function HelpPage() {
       // Zod validation
       const parsed = contactSchema.safeParse(formData);
       if (!parsed.success) {
-        const first = parsed.error.errors[0];
+        const first = parsed.error.issues[0];
         setFormError(first?.message ?? "Please fill in all fields correctly.");
         setFormStatus("error");
         return;

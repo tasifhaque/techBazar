@@ -9,7 +9,7 @@ router.post("/contact", async (c) => {
     const body = await c.req.json();
     const parsed = contactMessageSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json({ error: parsed.error.errors[0].message }, 400);
+      return c.json({ error: parsed.error.issues[0].message }, 400);
     }
 
     const { name, email, message } = parsed.data;

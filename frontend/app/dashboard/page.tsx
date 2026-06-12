@@ -44,7 +44,7 @@ const containerVariants = {
 
 const cardVariants = {
   hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 200, damping: 25 } },
+  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 200, damping: 25 } },
 };
 
 const shimmer = `relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:bg-gradient-to-r before:from-transparent before:via-[var(--accent)]/10 before:to-transparent before:animate-[shimmer_2s_infinite]`;
