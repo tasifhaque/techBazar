@@ -22,9 +22,9 @@ export default function HomePage() {
   const { siteName } = useSite();
   const [featured, setFeatured] = useState<Product[]>([]);
   const [latest, setLatest] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Parallelize API calls to avoid waterfall
     Promise.all([
       api.products.list({ limit: "15", featured: "true" }),
       api.products.list({ limit: "8", sort: "createdAt" }),
@@ -33,7 +33,8 @@ export default function HomePage() {
         setFeatured(featuredRes.products);
         setLatest(latestRes.products.filter((p) => !p.featured));
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const heroProducts = useMemo(() => featured.slice(0, 5), [featured]);
@@ -42,7 +43,11 @@ export default function HomePage() {
 
   return (
     <div>
-      <HeroCarousel products={heroProducts} />
+      {loading ? (
+        <div className="h-[80vh] min-h-[420px] sm:min-h-[500px] lg:min-h-[600px] bg-[var(--bg-secondary)] animate-pulse" />
+      ) : (
+        <HeroCarousel products={heroProducts} />
+      )}
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-20 space-y-16 md:space-y-28">
 
@@ -52,8 +57,24 @@ export default function HomePage() {
         {/* ─── About ─── */}
         <AboutSection />
 
+        {/* ─── Loading Skeletons for Products ─── */}
+        {loading && (
+          <section>
+            <div className="text-center mb-10 md:mb-12">
+              <div className="h-5 w-24 bg-[var(--bg-secondary)] rounded mx-auto mb-4 animate-pulse" />
+              <div className="h-8 w-64 bg-[var(--bg-secondary)] rounded mx-auto mb-2 animate-pulse" />
+              <div className="h-4 w-48 bg-[var(--bg-secondary)] rounded mx-auto animate-pulse" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="aspect-[4/3] bg-[var(--bg-secondary)] rounded animate-pulse" />
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ─── Curated Collection — Featured Products ─── */}
-        {featured.length > 5 && (
+        {!loading && featured.length > 5 && (
           <section>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -106,7 +127,7 @@ export default function HomePage() {
         )}
 
         {/* ─── Latest Arrivals — Mixed Products ─── */}
-        {latest.length > 0 && (
+        {!loading && latest.length > 0 && (
           <section>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
