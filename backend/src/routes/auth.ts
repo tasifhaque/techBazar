@@ -161,7 +161,7 @@ router.post("/verify-email", async (c) => {
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser && existingUser.emailVerified) {
       const t = generateToken({
-        _id: existingUser._id.toString(),
+        _id: String(existingUser._id),
         email: existingUser.email,
         role: existingUser.role,
       });
@@ -226,7 +226,7 @@ router.post("/verify-email", async (c) => {
     });
 
     const t = generateToken({
-      _id: user._id.toString(),
+      _id: String(user._id),
       email: user.email,
       role: user.role,
     });
@@ -450,7 +450,7 @@ router.post("/login", async (c) => {
     await User.updateOne({ _id: user._id }, { $inc: { loginCount: 1 } });
 
     const token = generateToken({
-      _id: user._id.toString(),
+      _id: String(user._id),
       email: user.email,
       role: user.role,
     });

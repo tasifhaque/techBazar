@@ -336,7 +336,7 @@ router.get("/users", async (c) => {
       { $match: { user: { $in: userIds } } },
       { $group: { _id: "$user", count: { $sum: 1 } } },
     ]);
-    const orderCountMap = Object.fromEntries(orderCounts.map((o) => [o._id.toString(), o.count]));
+    const orderCountMap = Object.fromEntries(orderCounts.map((o) => [String(o._id), o.count]));
 
     return c.json({
       users: users.map((u) => ({
@@ -347,7 +347,7 @@ router.get("/users", async (c) => {
         gender: u.gender,
         avatarUrl: u.avatarUrl,
         loginCount: u.loginCount || 0,
-        orderCount: orderCountMap[u._id.toString()] || 0,
+        orderCount: orderCountMap[String(u._id)] || 0,
         createdAt: u.createdAt,
       })),
       pagination: buildPagination(page, limit, total),
@@ -574,7 +574,7 @@ router.put("/profile", async (c) => {
     if (parsed.data.email) {
       const normalizedEmail = parsed.data.email.toLowerCase().trim();
       const emailUser = await User.findOne({ email: normalizedEmail });
-      if (emailUser && emailUser._id.toString() !== userId) {
+      if (emailUser && String(emailUser._id) !== userId) {
         return c.json({ error: "Email already in use by another user" }, 409);
       }
     }

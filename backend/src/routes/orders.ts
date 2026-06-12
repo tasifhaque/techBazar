@@ -34,7 +34,7 @@ router.post("/", authMiddleware, async (c) => {
 
     const productIds = items.map((i) => i.productId);
     const products = await Product.find({ _id: { $in: productIds } });
-    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+    const productMap = new Map(products.map((p) => [String(p._id), p]));
 
     const host = c.req.header("host") || "localhost:4000";
     const proto = c.req.header("x-forwarded-proto") || "http";
