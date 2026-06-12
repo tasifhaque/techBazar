@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import path from "path";
+import { readFile } from "fs/promises";
 import { fileURLToPath } from "url";
 
 const __dirname = import.meta.dirname ?? path.dirname(fileURLToPath(import.meta.url));
@@ -19,35 +20,39 @@ import helpRoutes from "./routes/help";
 
 const app = new Hono();
 
+const corsOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",")
+  : ["http://localhost:3000", "http://127.0.0.1:3000"];
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
+    origin: corsOrigins,
     credentials: true,
   })
 );
 
 app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-// ─── Backward-compat: serve legacy uploaded images from disk ────────────────
-// NOTE: New uploads are stored as base64 data URLs in MongoDB.
-// This route exists only for products that haven't been migrated yet.
-// Run POST /api/admin/migrate-images to convert all legacy images to data URLs,
-// then this route can be safely removed.
 app.get("/uploads/*", async (c) => {
   const filename = c.req.path.replace("/uploads/", "");
   const filePath = `./uploads/${filename}`;
-  const file = Bun.file(filePath);
-  const exists = await file.exists();
-  if (!exists) {
+  try {
+    const file = await readFile(filePath);
+    const ext = (filename.split(".").pop() || "jpg").toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+      webp: "image/webp", gif: "image/gif", svg: "image/svg+xml",
+    };
+    return new Response(file, {
+      headers: {
+        "Cache-Control": "public, max-age=604800, immutable",
+        "Content-Type": mimeTypes[ext] || "application/octet-stream",
+      },
+    });
+  } catch {
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800"><rect width="800" height="800" fill="#1a1a2e"/><text x="400" y="380" text-anchor="middle" fill="#4a4a6a" font-size="60" font-family="sans-serif">Image</text><text x="400" y="450" text-anchor="middle" fill="#4a4a6a" font-size="60" font-family="sans-serif">Not Found</text></svg>`;
     return new Response(svg, { headers: { "Content-Type": "image/svg+xml", "Cache-Control": "public, max-age=86400" } });
   }
-  return new Response(file, {
-    headers: {
-      "Cache-Control": "public, max-age=604800, immutable",
-      "Content-Type": file.type || "application/octet-stream",
-    },
-  });
 });
 
 app.route("/api/auth", authRoutes);
@@ -69,8 +74,11 @@ async function main() {
   const server = serve({ fetch: app.fetch, port: PORT });
   console.log(`Backend running on http://localhost:${PORT}`);
 
-  // Graceful shutdown — releases the port so Bun's --watch can restart cleanly
   process.on("SIGTERM", () => server.close());
 }
 
-main();
+export default app;
+
+if (process.env.VERCEL !== "1") {
+  main();
+}

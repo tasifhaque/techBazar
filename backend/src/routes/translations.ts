@@ -1,10 +1,12 @@
 import { Hono } from "hono";
 import { readFileSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 const router = new Hono();
 
-const translationsDir = join(import.meta.dir, "..", "translations");
+const __dirname = import.meta.dirname ?? dirname(fileURLToPath(import.meta.url));
+const translationsDir = join(__dirname, "..", "translations");
 
 router.get("/:lang", async (c) => {
   const { lang } = c.req.param();

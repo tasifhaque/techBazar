@@ -136,7 +136,7 @@ export default function ProductsPage() {
   const getImageUrl = (url: string) => {
     if (!url) return "/placeholder.svg";
     if (url.startsWith("data:")) return url;
-    if (url.startsWith("/uploads/")) return "http://localhost:4000" + url;
+    if (url.startsWith("/uploads/")) return (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000") + url;
     return url;
   };
 

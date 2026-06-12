@@ -1,3 +1,4 @@
+import { readFile } from "fs/promises";
 import { Hono } from "hono";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
@@ -190,33 +191,27 @@ router.post("/migrate-images", async (c) => {
         // Try to read the file from disk and convert to data URL
         const filePath = `./uploads/${filename}`;
         try {
-          const file = Bun.file(filePath);
-          const exists = await file.exists();
-          if (exists) {
-            const arrayBuffer = await file.arrayBuffer();
-            const ext = (filename.split(".").pop() || "jpg").toLowerCase();
-            const mimeTypes: Record<string, string> = {
-              jpg: "image/jpeg",
-              jpeg: "image/jpeg",
-              png: "image/png",
-              webp: "image/webp",
-              gif: "image/gif",
-            };
-            const mime = mimeTypes[ext] || "image/jpeg";
-            const base64 = Buffer.from(arrayBuffer).toString("base64");
-            newImages.push(`data:${mime};base64,${base64}`);
-            changed = true;
-          } else {
-            // File doesn't exist on disk — push a placeholder
+          const buffer = await readFile(filePath);
+          const ext = (filename.split(".").pop() || "jpg").toLowerCase();
+          const mimeTypes: Record<string, string> = {
+            jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png",
+            webp: "image/webp", gif: "image/gif",
+          };
+          const mime = mimeTypes[ext] || "image/jpeg";
+          const base64 = buffer.toString("base64");
+          newImages.push(`data:${mime};base64,${base64}`);
+          changed = true;
+        } catch (err: any) {
+          if (err?.code === "ENOENT") {
             console.warn(`Migration: file not found on disk: ${filePath}`);
             newImages.push(url);
             failed++;
+          } else {
+            console.error(`Migration: error reading ${filePath}:`, err);
+            newImages.push(url);
+            failed++;
+            errors.push(`${product._id}: ${url} — ${err instanceof Error ? err.message : String(err)}`);
           }
-        } catch (err) {
-          console.error(`Migration: error reading ${filePath}:`, err);
-          newImages.push(url);
-          failed++;
-          errors.push(`${product._id}: ${url} — ${err instanceof Error ? err.message : String(err)}`);
         }
       }
 

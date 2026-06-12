@@ -1,7 +1,7 @@
 const API_BASE = "/api";
 
 // Direct backend URL for serving uploaded files (not proxied by Next.js)
-export const BACKEND_URL = "http://localhost:4000";
+export const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
 // ─── In-memory API cache with TTL ────────────────────────────────────────────
 // This is the KEY fix for slow navigation: caching GET responses so navigating

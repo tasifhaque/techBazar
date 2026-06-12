@@ -1,3 +1,4 @@
+import { readFile } from "fs/promises";
 import { Hono } from "hono";
 import { Product } from "../models";
 
@@ -99,12 +100,14 @@ router.get("/image/:productId/:index", async (c) => {
     if (url.startsWith("/uploads/")) {
       const filename = url.replace("/uploads/", "");
       const filePath = `./uploads/${filename}`;
-      const file = Bun.file(filePath);
-      const exists = await file.exists();
-      if (!exists) return c.json({ error: "File not found" }, 404);
-      return new Response(file, {
-        headers: { "Cache-Control": "public, max-age=604800, immutable" },
-      });
+      try {
+        const file = await readFile(filePath);
+        return new Response(file, {
+          headers: { "Cache-Control": "public, max-age=604800, immutable" },
+        });
+      } catch {
+        return c.json({ error: "File not found" }, 404);
+      }
     }
 
     // Unknown URL format — try redirect anyway
