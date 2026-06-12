@@ -9,7 +9,6 @@ import { HeroCarouselSkeleton } from "@/components/SkeletonLoader";
 import ProductCard from "@/components/ProductCard";
 import { api, type Product } from "@/lib/api";
 import { useSite } from "@/store/site";
-import { useI18n } from "@/lib/i18n-context";
 import Link from "next/link";
 
 // Lazy-load below-the-fold components for faster initial paint
@@ -22,7 +21,6 @@ const PromoSection = dynamic(() => import("@/components/PromoSection"), {
 
 export default function HomePage() {
   const { siteName } = useSite();
-  const { isLoaded: translationsLoaded } = useI18n();
   const [featured, setFeatured] = useState<Product[]>([]);
   const [latest, setLatest] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +44,7 @@ export default function HomePage() {
 
   return (
     <div>
-      {loading || !translationsLoaded ? (
+      {loading ? (
         <HeroCarouselSkeleton />
       ) : (
         <HeroCarousel products={heroProducts} />
