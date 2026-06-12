@@ -1,4 +1,3 @@
-import { handle } from "hono/netlify";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -64,8 +63,4 @@ app.get("/api/health", (c: any) =>
   c.json({ status: "ok", routesLoaded, dbConnected })
 );
 
-export default handle(app);
-
-export const config = {
-  path: "/api/*",
-};
+export default app;
