@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Zap, ShoppingBag, TrendingUp, ChevronRight, Package } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
-import { HeroCarouselSkeleton } from "@/components/SkeletonLoader";
 import ProductCard from "@/components/ProductCard";
 import { api, type Product } from "@/lib/api";
 import { useSite } from "@/store/site";
@@ -44,11 +43,7 @@ export default function HomePage() {
 
   return (
     <div>
-      {loading ? (
-        <HeroCarouselSkeleton />
-      ) : (
-        <HeroCarousel products={heroProducts} />
-      )}
+      <HeroCarousel products={heroProducts} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-20 space-y-16 md:space-y-28">
 

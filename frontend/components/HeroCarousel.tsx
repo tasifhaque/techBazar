@@ -68,17 +68,8 @@ export default function HeroCarousel({ products }: Props) {
   };
 
   if (products.length === 0) {
-    // If translations haven't loaded yet, show a skeleton to avoid
-    // flashing raw translation keys like "hero.no_products"
-    if (!isLoaded) {
-      return (
-        <div className="h-[80vh] min-h-[420px] sm:min-h-[500px] lg:min-h-[600px] bg-[var(--bg-secondary)] animate-pulse" />
-      );
-    }
     return (
-      <div className="h-[80vh] min-h-[420px] sm:min-h-[500px] lg:min-h-[600px] flex items-center justify-center bg-[var(--bg-secondary)] border border-[var(--border)]">
-        <p className="text-lg text-[var(--text-tertiary)] font-serif">{t("hero.no_products")}</p>
-      </div>
+      <div className="h-[80vh] min-h-[420px] sm:min-h-[500px] lg:min-h-[600px] bg-[var(--bg-secondary)] animate-pulse" />
     );
   }
 
