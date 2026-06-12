@@ -1,5 +1,5 @@
 import { handle } from "hono/netlify";
-import app from "../../src/index";
+import app from "../../src/netlify";
 
 export default handle(app);
 
