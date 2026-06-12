@@ -55,7 +55,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       if (!isLoaded) return key;
       let value = translations[key];
       if (value === undefined) {
-        // Fallback — return the key itself if not found
         value = key;
       }
       if (params) {
@@ -65,7 +64,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       }
       return value;
     },
-    [translations]
+    [isLoaded, translations]
   );
 
   const switchLocale = useCallback(
