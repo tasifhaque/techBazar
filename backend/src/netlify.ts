@@ -1,3 +1,4 @@
+import { handle } from "hono/netlify";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
@@ -11,7 +12,7 @@ app.use(
 );
 
 let dbConnected = false;
-let loadError: string | null = null;
+let routesLoaded = false;
 
 (async () => {
   try {
@@ -46,7 +47,6 @@ let loadError: string | null = null;
       await next();
     });
 
-    app.get("/api/health", (c: any) => c.json({ status: "ok" }));
     app.route("/api/auth", authRoutes);
     app.route("/api/products", productRoutes);
     app.route("/api/admin", adminRoutes);
@@ -54,16 +54,18 @@ let loadError: string | null = null;
     app.route("/api/translations", translationRoutes);
     app.route("/api/settings", settingsRoutes);
     app.route("/api/help", helpRoutes);
+    routesLoaded = true;
   } catch (err: any) {
-    loadError = err?.message || String(err);
-    console.error("MODULE LOAD ERROR:", loadError);
+    console.error("ROUTE LOAD ERROR:", err?.message || String(err));
   }
 })();
 
-if (loadError) {
-  app.get("/api/health", (c: any) => c.json({ status: "error", error: loadError }));
-} else {
-  app.get("/api/health", (c: any) => c.json({ status: "ok-loading" }));
-}
+app.get("/api/health", (c: any) =>
+  c.json({ status: "ok", routesLoaded, dbConnected })
+);
 
-export default app;
+export default handle(app);
+
+export const config = {
+  path: "/api/*",
+};
