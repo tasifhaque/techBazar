@@ -2,16 +2,11 @@ import ProductsContent from "./products-content";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
-/** How often (in seconds) the product list is re-fetched on the server. */
-const REVALIDATE_SECONDS = 120;
-
 // ISR (Incremental Static Regeneration): the page is pre-rendered at build time
 // and served from the Vercel CDN edge — no serverless cold starts for visitors.
 // Revalidation happens in the background: stale is served, fresh is fetched.
-// Note: the inner fetch uses cache: 'no-store' because the backend response
-// contains base64 data URLs (~10MB total) which exceed Next.js's 2MB Data
-// Cache limit. The backend has its own in-memory cache (30s TTL) for speed.
-export const revalidate = REVALIDATE_SECONDS;
+// The backend response is 25KB (firstImage removed) — well under the 2MB limit.
+export const revalidate = 120;
 
 /**
  * ProductsPage — pre-rendered via ISR. On Vercel the full HTML is served from
@@ -37,7 +32,7 @@ async function ProductsFetcher() {
 
   try {
     const res = await fetch(`${BACKEND_URL}/api/products?limit=40`, {
-      cache: 'no-store',
+      next: { revalidate: 120 },
     });
     if (res.ok) {
       const data = await res.json();
