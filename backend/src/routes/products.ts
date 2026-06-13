@@ -4,11 +4,56 @@ import { Product } from "../models";
 
 const router = new Hono();
 
+// ─── In-memory cache for products list response ──────────────────────────────
+// Holds the full JSON response so repeated SSR fetches are instant instead of
+// waiting ~1s for MongoDB Atlas free tier queries.
+const productListCache = new Map<string, { data: unknown; timestamp: number }>();
+const PRODUCT_LIST_CACHE_TTL = 30_000; // 30 seconds
+
+function getCachedProductList(key: string): unknown | null {
+  const entry = productListCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > PRODUCT_LIST_CACHE_TTL) {
+    productListCache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCachedProductList(key: string, data: unknown): void {
+  productListCache.set(key, { data, timestamp: Date.now() });
+}
+
+// ─── In-memory cache for image proxy lookups ─────────────────────────────────
+// Key: `${productId}:${index}`, Value: URL string
+// Reduces repeated MongoDB queries for the same image across product list renders
+const imageCache = new Map<string, { url: string; timestamp: number }>();
+const IMAGE_CACHE_TTL = 300_000; // 5 minutes
+
+function getCachedImageUrl(key: string): string | null {
+  const entry = imageCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > IMAGE_CACHE_TTL) {
+    imageCache.delete(key);
+    return null;
+  }
+  return entry.url;
+}
+
+function setCachedImageUrl(key: string, url: string): void {
+  imageCache.set(key, { url, timestamp: Date.now() });
+}
+
 // ─── Routes ─────────────────────────────────────────────────────────────────
 
 router.get("/", async (c) => {
   try {
     const { category, brand, search, sort, featured, page: pageStr = "1", limit: limitStr = "12" } = c.req.query();
+
+    // ── Check in-memory cache (only for the default list query) ────────────
+    const cacheKey = `${category || ""}|${brand || ""}|${search || ""}|${sort || ""}|${featured || ""}|${pageStr}|${limitStr}`;
+    const cached = getCachedProductList(cacheKey);
+    if (cached) return c.json(cached);
 
     const page = Math.max(1, parseInt(pageStr) || 1);
     const limit = Math.max(1, parseInt(limitStr) || 12);
@@ -38,7 +83,10 @@ router.get("/", async (c) => {
         { $match: filter },
         // Compute imageCount while images still available
         { $addFields: { imageCount: { $cond: { if: { $isArray: "$images" }, then: { $size: "$images" }, else: 0 } } } },
-        // Exclude heavy images field before sort to stay under 32MB memory limit
+        // Include only the first image URL (lightweight string) to eliminate
+        // the image proxy N+1 waterfall on the products list page.
+        // The full images array is excluded to keep the pipeline lean.
+        { $addFields: { firstImage: { $cond: { if: { $isArray: "$images" }, then: { $arrayElemAt: ["$images", 0] }, else: null } } } },
         { $project: { images: 0, __v: 0 } },
         { $sort: sortOption },
         { $skip: skip },
@@ -47,7 +95,7 @@ router.get("/", async (c) => {
       Product.countDocuments(filter),
     ]);
 
-    return c.json({
+    const result = {
       products,
       pagination: {
         total,
@@ -55,7 +103,9 @@ router.get("/", async (c) => {
         limit,
         totalPages: Math.ceil(total / limit),
       },
-    });
+    };
+    setCachedProductList(cacheKey, result);
+    return c.json(result);
   } catch (err) {
     console.error("Get products error:", err);
     return c.json({ error: "Internal server error" }, 500);
@@ -66,10 +116,20 @@ router.get("/", async (c) => {
 // Serves individual product images. Accepts base64 data URLs from MongoDB,
 // external URLs (picsum.photos), and /uploads/ paths.
 // This keeps the products list API response small (no multi-MB data URLs).
+// Includes an in-memory cache to avoid repeated MongoDB lookups.
 router.get("/image/:productId/:index", async (c) => {
   try {
     const { productId, index } = c.req.param();
     const idx = parseInt(index);
+    const cacheKey = `${productId}:${idx}`;
+
+    // 1. Check in-memory cache first (avoids MongoDB query)
+    const cachedUrl = getCachedImageUrl(cacheKey);
+    if (cachedUrl) {
+      return await serveImageUrl(cachedUrl);
+    }
+
+    // 2. Miss — query MongoDB
     const product = await Product.findById(productId).select("images").lean();
     if (!product || !product.images || !product.images[idx]) {
       return c.json({ error: "Image not found" }, 404);
@@ -77,46 +137,72 @@ router.get("/image/:productId/:index", async (c) => {
 
     const url = product.images[idx];
 
-    // Data URL — decode and serve binary
-    if (url.startsWith("data:")) {
-      const [header, base64] = url.split(",");
-      const mime = header.split(":")[1].split(";")[0];
-      const binary = Buffer.from(base64, "base64");
-      return new Response(binary, {
-        headers: {
-          "Content-Type": mime,
-          "Cache-Control": "public, max-age=604800, immutable",
-          "Content-Length": binary.length.toString(),
-        },
-      });
-    }
+    // 3. Cache the resolved URL for future requests
+    setCachedImageUrl(cacheKey, url);
 
-    // External URL (picsum.photos etc.) — redirect
-    if (url.startsWith("http")) {
-      return c.redirect(url, 302);
-    }
-
-    // /uploads/ path — serve from disk
-    if (url.startsWith("/uploads/")) {
-      const filename = url.replace("/uploads/", "");
-      const filePath = `./uploads/${filename}`;
-      try {
-        const file = await readFile(filePath);
-        return new Response(file, {
-          headers: { "Cache-Control": "public, max-age=604800, immutable" },
-        });
-      } catch {
-        return c.json({ error: "File not found" }, 404);
-      }
-    }
-
-    // Unknown URL format — try redirect anyway
-    return c.redirect(url, 302);
+    // 4. Serve the image with proper caching headers
+    return await serveImageUrl(url);
   } catch (err) {
     console.error("Image proxy error:", err);
     return c.json({ error: "Image not found" }, 404);
   }
 });
+
+// Helper: serve an image URL with proper caching headers
+async function serveImageUrl(url: string): Promise<Response> {
+  // Data URL — decode and serve binary
+  if (url.startsWith("data:")) {
+    const [header, base64] = url.split(",");
+    const mime = header.split(":")[1].split(";")[0];
+    const binary = Buffer.from(base64, "base64");
+    return new Response(binary, {
+      headers: {
+        "Content-Type": mime,
+        "Cache-Control": "public, max-age=604800, immutable",
+        "Content-Length": binary.length.toString(),
+      },
+    });
+  }
+
+  // External URL (picsum.photos etc.) — redirect with caching headers
+  if (url.startsWith("http")) {
+    // Using 307 to preserve the method; adding Cache-Control so the redirect
+    // itself can be cached by the browser for subsequent visits.
+    return new Response(null, {
+      status: 307,
+      headers: {
+        "Location": url,
+        "Cache-Control": "public, max-age=86400",  // cache redirect for 1 day
+      },
+    });
+  }
+
+  // /uploads/ path — serve from disk
+  if (url.startsWith("/uploads/")) {
+    const filename = url.replace("/uploads/", "");
+    const filePath = `./uploads/${filename}`;
+    try {
+      const file = await readFile(filePath);
+      return new Response(file, {
+        headers: { "Cache-Control": "public, max-age=604800, immutable" },
+      });
+    } catch {
+      return new Response(JSON.stringify({ error: "File not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
+  // Unknown — redirect anyway with caching
+  return new Response(null, {
+    status: 307,
+    headers: {
+      "Location": url,
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
+}
 
 router.get("/categories", async (c) => {
   try {

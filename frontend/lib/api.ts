@@ -67,6 +67,9 @@ export interface Product {
   images?: string[];
   /** Number of images available (always present in list response) */
   imageCount?: number;
+  /** First image URL — included in list responses to avoid per-image proxy requests.
+   *  This is a lightweight string (external URL, data URL, or /uploads/ path). */
+  firstImage?: string;
   stock: number;
   featured?: boolean;
   featuredOrder?: number;
@@ -304,7 +307,9 @@ export function getProductImageUrl(srcOrProduct: string | Product, index: number
     if (product.images && product.images.length > index) {
       return product.images[index];
     }
-    // List response — construct proxy URL
+    // List response: always use the proxy URL instead of embedding base64 data URLs
+    // in the HTML. Data URLs from firstImage can be 40-50KB each, making a 40-product
+    // SSR page 15+ MB. The proxy has in-memory caching + Cache-Control headers.
     return `/api/products/image/${product._id}/${index}`;
   }
 

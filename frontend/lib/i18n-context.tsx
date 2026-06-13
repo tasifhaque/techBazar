@@ -12,6 +12,7 @@ import {
 import { useLocale, type Locale } from "@/store/locale";
 import { fetchTranslations, clearTranslationCache } from "./i18n";
 import type { TranslationMap } from "./i18n";
+import enTranslations from "../translations/en.json";
 
 interface I18nContextValue {
   t: (key: string, params?: Record<string, string | number>) => string;
@@ -25,13 +26,15 @@ const I18nContext = createContext<I18nContextValue | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const { locale, setLocale } = useLocale();
-  const [translations, setTranslations] = useState<TranslationMap>({});
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [translations, setTranslations] = useState<TranslationMap>(enTranslations);
+  const [isLoaded, setIsLoaded] = useState(true);
   const mountedRef = useRef(true);
 
-  // Load translations on mount and when locale changes
+  // Load translations from backend when locale changes (non-English)
   useEffect(() => {
+    if (locale === "en") return;
     mountedRef.current = true;
+    setIsLoaded(false);
 
     async function load() {
       try {
@@ -42,7 +45,6 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.error("[I18nProvider] Unexpected error loading translations:", err);
-        // Even on error, mark as loaded so the UI renders with fallback keys
         if (mountedRef.current) {
           setIsLoaded(true);
         }
@@ -56,22 +58,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     };
   }, [locale]);
 
-  // Safety net: if translations haven't loaded after 8 seconds, force isLoaded
-  // so the UI doesn't stay stuck showing raw keys forever.
-  useEffect(() => {
-    if (isLoaded) return;
-    const timer = setTimeout(() => {
-      if (!isLoaded && mountedRef.current) {
-        console.warn("[I18nProvider] Safety timeout — forcing isLoaded=true");
-        setIsLoaded(true);
-      }
-    }, 8000);
-    return () => clearTimeout(timer);
-  }, [isLoaded]);
-
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
-      if (!isLoaded) return key;
       let value = translations[key];
       if (value === undefined) {
         value = key;

@@ -72,6 +72,8 @@ export default function ProductImage({
           src={resolvedSrc}
           alt={alt}
           loading={loading}
+          fetchPriority={priority ? "high" : undefined}
+          decoding="async"
           onLoad={handleLoad}
           className={`transition-opacity duration-500 ${className} ${
             loaded || priority ? "opacity-100" : "opacity-0"

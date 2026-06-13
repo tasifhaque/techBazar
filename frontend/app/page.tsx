@@ -100,7 +100,7 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {gridProducts.map((p, i) => (
-                <ProductCard key={p._id} product={p} index={i} />
+                <ProductCard key={p._id} product={p} />
               ))}
             </div>
 
@@ -151,7 +151,7 @@ export default function HomePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
               {latestProducts.map((p, i) => (
-                <ProductCard key={p._id} product={p} index={i} />
+                <ProductCard key={p._id} product={p} />
               ))}
             </div>
 

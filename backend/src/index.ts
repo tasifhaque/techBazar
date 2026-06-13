@@ -10,7 +10,6 @@ if (process.env.VERCEL !== "1" && process.env.NETLIFY !== "1") {
   config({ path: path.resolve(__dirname, "..", "..", ".env") });
 }
 
-import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { connectDB } from "./config/db";
@@ -81,22 +80,4 @@ app.route("/api/translations", translationRoutes);
 app.route("/api/settings", settingsRoutes);
 app.route("/api/help", helpRoutes);
 
-const PORT = parseInt(process.env.PORT || "4000");
-
-async function main() {
-  try {
-    await connectDB();
-  } catch (err) {
-    console.warn("MongoDB connection failed, running without database:", err);
-  }
-  const server = serve({ fetch: app.fetch, port: PORT });
-  console.log(`Backend running on http://localhost:${PORT}`);
-
-  process.on("SIGTERM", () => server.close());
-}
-
-export default app;
-
-if (process.env.VERCEL !== "1" && process.env.NETLIFY !== "1") {
-  main();
-}
+export { app };

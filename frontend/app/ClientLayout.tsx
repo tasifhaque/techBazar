@@ -34,7 +34,7 @@ const LayoutInner = memo(function LayoutInner({
       <AnimatePresence mode="popLayout">
         <motion.main
           key={pathname}
-          initial={{ opacity: 0, y: 6 }}
+          initial={false}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
           transition={{ duration: 0.15, ease: "easeOut" }}

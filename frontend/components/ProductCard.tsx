@@ -15,10 +15,11 @@ import { useI18n } from "@/lib/i18n-context";
 
 interface Props {
   product: Product;
-  index?: number;
+  /** Preload the product image (use for above-the-fold cards) */
+  priority?: boolean;
 }
 
-function ProductCardInner({ product, index = 0 }: Props) {
+function ProductCardInner({ product, priority = false }: Props) {
   const { t } = useI18n();
   const addItem = useCart((s) => s.addItem);
   const setQuickBuyItem = useQuickBuy((s) => s.setItem);
@@ -72,9 +73,8 @@ function ProductCardInner({ product, index = 0 }: Props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
       className="group bg-[var(--bg-card)] border border-[var(--border)] overflow-hidden flex flex-col cursor-pointer hover:border-[var(--accent)]/30 hover:shadow-[0_0_40px_rgba(212,175,55,0.06)] transition-all duration-500"
       onClick={handleNavigate}
     >
@@ -88,7 +88,8 @@ function ProductCardInner({ product, index = 0 }: Props) {
               alt={product.title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-              loading="lazy"
+              loading={priority ? "eager" : "lazy"}
+              priority={priority}
               onLoad={() => setImgLoaded(true)}
               className="object-cover transition-all duration-700 group-hover:scale-105"
             />

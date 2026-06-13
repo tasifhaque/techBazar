@@ -1,4 +1,4 @@
-import app from "../src/index";
+import { app } from "../src/index";
 import { connectDB } from "../src/config/db";
 
 let connected = false;

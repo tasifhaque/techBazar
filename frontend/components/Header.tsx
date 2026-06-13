@@ -26,7 +26,7 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useI18n } from "@/lib/i18n-context";
 
 export default function Header() {
-  const { t, isLoaded } = useI18n();
+  const { t } = useI18n();
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const { siteName } = useSite();
   const { isDark, toggle } = useTheme();
@@ -105,13 +105,14 @@ export default function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  prefetch={link.href === "/products" ? true : undefined}
                   className={`relative text-sm tracking-wide font-medium transition-colors duration-300 min-w-[4rem] text-center ${
                     isActive
                       ? "text-[var(--accent)]"
                       : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   }`}
                 >
-                  <span className={isLoaded ? "" : "invisible"}>{link.label || "\u00A0"}</span>
+                  <span>{link.label || "\u00A0"}</span>
                   {isActive && (
                     <motion.span
                       layoutId="nav-underline"
@@ -355,6 +356,7 @@ export default function Header() {
                   <Link
                     key={link.href}
                     href={link.href}
+                    prefetch={link.href === "/products" ? true : undefined}
                     onClick={() => setMobileOpen(false)}
                     className={`block px-4 py-2.5 text-sm font-medium rounded-md transition-all ${
                       isActive
@@ -362,7 +364,7 @@ export default function Header() {
                         : "text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)]"
                     }`}
                   >
-                    <span className={isLoaded ? "" : "invisible"}>{link.label || "\u00A0"}</span>
+                    <span>{link.label || "\u00A0"}</span>
                   </Link>
                 );
               })}
