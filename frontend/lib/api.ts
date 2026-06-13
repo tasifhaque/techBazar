@@ -300,16 +300,21 @@ export interface AdminListResponse<T> {
  * For detail responses (has `images` array), returns the data URL directly.
  */
 export function getProductImageUrl(srcOrProduct: string | Product, index: number = 0): string {
-  // If given a product object, resolve via proxy or inline data URL
+  // If given a product object, resolve via firstImage or proxy URL
   if (typeof srcOrProduct === "object" && srcOrProduct !== null) {
     const product = srcOrProduct;
     // Detail page response includes full images — use directly
     if (product.images && product.images.length > index) {
       return product.images[index];
     }
-    // List response: always use the proxy URL instead of embedding base64 data URLs
-    // in the HTML. Data URLs from firstImage can be 40-50KB each, making a 40-product
-    // SSR page 15+ MB. The proxy has in-memory caching + Cache-Control headers.
+    // Use firstImage if available (already resolved to a direct URL during SSR,
+    // or returned by the API for client-side fetches). This avoids a 307 redirect
+    // through the image proxy for external URLs (e.g., picsum.photos).
+    if (product.firstImage) {
+      return product.firstImage;
+    }
+    // Fallback: proxy URL — the backend will decode base64 data URLs or redirect
+    // to external URLs. The proxy has in-memory caching + Cache-Control headers.
     return `/api/products/image/${product._id}/${index}`;
   }
 

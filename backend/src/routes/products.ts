@@ -25,23 +25,25 @@ function setCachedProductList(key: string, data: unknown): void {
 }
 
 // ─── In-memory cache for image proxy lookups ─────────────────────────────────
-// Key: `${productId}:${index}`, Value: URL string
-// Reduces repeated MongoDB queries for the same image across product list renders
-const imageCache = new Map<string, { url: string; timestamp: number }>();
+// Key: `${productId}:${index}`, Value: URL string + optionally decoded binary
+// For data URLs, the decoded binary is cached alongside the URL so repeated
+// requests don't re-decode base64 (saves ~1-2ms per image × 40 images = saving).
+// Also avoids repeated MongoDB queries for the same image across product renders.
+const imageCache = new Map<string, { url: string; binary?: Buffer; mime?: string; timestamp: number }>();
 const IMAGE_CACHE_TTL = 300_000; // 5 minutes
 
-function getCachedImageUrl(key: string): string | null {
+function getCachedImageUrl(key: string): { url: string; binary?: Buffer; mime?: string } | null {
   const entry = imageCache.get(key);
   if (!entry) return null;
   if (Date.now() - entry.timestamp > IMAGE_CACHE_TTL) {
     imageCache.delete(key);
     return null;
   }
-  return entry.url;
+  return { url: entry.url, binary: entry.binary, mime: entry.mime };
 }
 
-function setCachedImageUrl(key: string, url: string): void {
-  imageCache.set(key, { url, timestamp: Date.now() });
+function setCachedImageUrl(key: string, url: string, binary?: Buffer, mime?: string): void {
+  imageCache.set(key, { url, binary, mime, timestamp: Date.now() });
 }
 
 // ─── Routes ─────────────────────────────────────────────────────────────────
@@ -95,6 +97,25 @@ router.get("/", async (c) => {
       Product.countDocuments(filter),
     ]);
 
+    // ── Pre-warm image cache ──────────────────────────────────────────────
+    // Each product's firstImage is already known from the aggregate query.
+    // Storing it in the image cache avoids 40 individual MongoDB lookups when
+    // the browser loads product grid images. For data URLs we also decode and
+    // cache the binary so the proxy serves them instantly without base64 work.
+    for (const p of products) {
+      const url = p.firstImage;
+      if (url) {
+        if (typeof url === "string" && url.startsWith("data:")) {
+          const [header, base64] = url.split(",");
+          const mime = header.split(":")[1].split(";")[0];
+          const binary = Buffer.from(base64, "base64");
+          setCachedImageUrl(`${p._id}:0`, url, binary, mime);
+        } else {
+          setCachedImageUrl(`${p._id}:0`, url);
+        }
+      }
+    }
+
     const result = {
       products,
       pagination: {
@@ -137,7 +158,14 @@ router.get("/image/:productId/:index", async (c) => {
 
     const url = product.images[idx];
 
-    // 3. Cache the resolved URL for future requests
+    // 3. Cache the resolved URL for future requests (also pre-decode data URLs)
+    if (typeof url === "string" && url.startsWith("data:")) {
+      const [header, base64] = url.split(",");
+      const mime = header.split(":")[1].split(";")[0];
+      const binary = Buffer.from(base64, "base64");
+      setCachedImageUrl(cacheKey, url, binary, mime);
+      return await serveImageUrl({ url, binary, mime });
+    }
     setCachedImageUrl(cacheKey, url);
 
     // 4. Serve the image with proper caching headers
@@ -149,9 +177,23 @@ router.get("/image/:productId/:index", async (c) => {
 });
 
 // Helper: serve an image URL with proper caching headers
-async function serveImageUrl(url: string): Promise<Response> {
-  // Data URL — decode and serve binary
+// Accepts either a URL string or a cached entry with pre-decoded binary.
+async function serveImageUrl(urlOrEntry: string | { url: string; binary?: Buffer; mime?: string }): Promise<Response> {
+  const url = typeof urlOrEntry === "string" ? urlOrEntry : urlOrEntry.url;
+  const cachedBinary = typeof urlOrEntry === "object" ? urlOrEntry.binary : undefined;
+  const cachedMime = typeof urlOrEntry === "object" ? urlOrEntry.mime : undefined;
+
+  // Data URL — decode and serve binary (or use pre-cached binary)
   if (url.startsWith("data:")) {
+    if (cachedBinary && cachedMime) {
+      return new Response(cachedBinary, {
+        headers: {
+          "Content-Type": cachedMime,
+          "Cache-Control": "public, max-age=604800, immutable",
+          "Content-Length": cachedBinary.length.toString(),
+        },
+      });
+    }
     const [header, base64] = url.split(",");
     const mime = header.split(":")[1].split(";")[0];
     const binary = Buffer.from(base64, "base64");

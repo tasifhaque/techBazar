@@ -29,6 +29,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
       <head>
         <ThemeScript />
+        <link rel="preconnect" href="https://picsum.photos" />
+        <link rel="dns-prefetch" href="https://picsum.photos" />
       </head>
       <body className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300" suppressHydrationWarning>
         <ClientLayout>{children}</ClientLayout>
