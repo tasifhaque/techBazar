@@ -102,6 +102,8 @@ router.get("/", async (c) => {
     // Storing it in the image cache avoids 40 individual MongoDB lookups when
     // the browser loads product grid images. For data URLs we also decode and
     // cache the binary so the proxy serves them instantly without base64 work.
+    // After caching, we delete firstImage from the response to keep it lean
+    // (~100KB instead of 10MB with base64 data URLs).
     for (const p of products) {
       const url = p.firstImage;
       if (url) {
@@ -114,6 +116,9 @@ router.get("/", async (c) => {
           setCachedImageUrl(`${p._id}:0`, url);
         }
       }
+      // Remove firstImage from response — saves ~10MB of network transfer.
+      // The client uses proxy URLs (/api/products/image/:id/0) instead.
+      delete p.firstImage;
     }
 
     const result = {
